@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "id.co.brainy"
+    namespace = "id.co.ingatin"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "id.co.brainy"
+        applicationId = "id.co.ingatin"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
