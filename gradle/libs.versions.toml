@@ -15,6 +15,8 @@ converterGson = "2.9.0"
 loggingInterceptor = "4.12.0"
 datastorePreferences = "1.1.6"
 runtimeLivedata = "1.8.1"
+googleGmsGoogleServices = "4.4.3"
+firebaseBom = "24.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,8 +51,14 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 #Livedata
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 
+#Firebase
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth"}
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore"}
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
 
