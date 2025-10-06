@@ -2,6 +2,8 @@ package id.co.ingatin.data.repository
 
 import id.co.ingatin.data.model.LoginReq
 import id.co.ingatin.data.model.RegisterReq
+import id.co.ingatin.data.model.User
+import id.co.ingatin.data.network.firebase.FirebaseService
 import id.co.ingatin.data.network.response.LoginResponse
 import id.co.ingatin.data.network.response.RegistResponse
 import id.co.ingatin.data.network.response.UserResponse
@@ -12,7 +14,7 @@ import id.co.ingatin.data.utils.parseErrorMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
-class AuthRepository(private val apiService: ApiService, private val userPreferences: UserPreferences){
+class AuthRepository(private val firebase: FirebaseService, private val apiService: ApiService, private val userPreferences: UserPreferences){
 
     suspend fun register(
         username: String,
@@ -27,6 +29,10 @@ class AuthRepository(private val apiService: ApiService, private val userPrefere
             val message = parseErrorMessage(e)
             Result.failure(Exception(message))
         }
+    }
+
+    suspend fun regist( email: String, password: String, nama: String): Result<User>{
+        return firebase.createAccount(email, password, nama)
     }
 
     suspend fun login(

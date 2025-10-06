@@ -2,6 +2,7 @@ package id.co.ingatin.ui.screen.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import id.co.ingatin.data.model.User
 import id.co.ingatin.data.network.response.LoginResponse
 import id.co.ingatin.data.network.response.RegistResponse
 import id.co.ingatin.data.repository.AuthRepository
@@ -15,6 +16,9 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
 
     private val _registerState = MutableStateFlow<UiState<RegistResponse>>(UiState.Empty)
     val registerState: StateFlow<UiState<RegistResponse>> = _registerState
+
+    private val _registState = MutableStateFlow<UiState<User>>(UiState.Loading)
+    val registState: StateFlow<UiState<User>> = _registState
 
     private val _loginState = MutableStateFlow<UiState<LoginResponse>>(UiState.Empty)
     val loginState: StateFlow<UiState<LoginResponse>> = _loginState
@@ -35,6 +39,17 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
                 _registerState.value = UiState.Error(it.message ?: "Unknown Error")
             }
 
+        }
+    }
+
+    fun regist(email: String, password: String, nama: String){
+        viewModelScope.launch {
+            val res = authRepository.regist(email, password, nama)
+            res.onSuccess {
+
+            }.onFailure {
+
+            }
         }
     }
 
