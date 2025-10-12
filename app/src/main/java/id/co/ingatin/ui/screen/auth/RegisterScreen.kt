@@ -1,5 +1,6 @@
 package id.co.ingatin.ui.screen.auth
 
+import android.R.attr.password
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -43,61 +44,45 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
 import id.co.ingatin.ui.theme.BrainyTheme
 
 @Composable
-fun RegisterScreen(navController: NavController) {
-
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context) }
-    val viewModel: AuthViewModel = viewModel(factory = factory)
 
-    val registerState by viewModel.registerState.collectAsState()
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val username by viewModel.name.collectAsState()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
+    val registerState by viewModel.registState.collectAsState()
 
-    var isLoading by remember { mutableStateOf(false) }
+    val isLoading = registerState is UiState.Loading
 
     LaunchedEffect(registerState) {
         when (val state = registerState) {
-            is UiState.Empty -> {
-                isLoading = false
-            }
-
-            is UiState.Loading -> {
-                isLoading = true
-                Log.d("Register", "Loading...")
-            }
-
             is UiState.Success -> {
-                isLoading = false
-
-                val data = state.data
-                Log.d("Register", "Registrasi berhasil: $data")
                 Toast.makeText(context, "Registrasi berhasil", Toast.LENGTH_SHORT).show()
-
-                navController.navigate("login")
-
+                navController.navigate("login") {
+                    popUpTo("register") { inclusive = true }
+                }
             }
 
             is UiState.Error -> {
-                isLoading = false
-                val errorMessage = state.errorMessage
-
-                Log.e("Register", "Registrasi gagal: $errorMessage")
-                Toast.makeText(context, "Gagal daftar: $errorMessage", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Gagal daftar: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
             }
+
+            else -> Unit
         }
     }
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -139,7 +124,7 @@ fun RegisterScreen(navController: NavController) {
             CustomTextField(
                 values = username,
                 onValueChange = {
-                    username = it
+                    viewModel.name.value = it
                 },
                 placeholder = "Username",
                 icon = Icons.Default.AccountCircle,
@@ -151,7 +136,7 @@ fun RegisterScreen(navController: NavController) {
             CustomTextField(
                 values = email,
                 onValueChange = {
-                    email = it
+                    viewModel.email.value = it
                 },
                 placeholder = "Email",
                 icon = Icons.Default.Email,
@@ -163,7 +148,7 @@ fun RegisterScreen(navController: NavController) {
             CustomTextField(
                 values = password,
                 onValueChange = {
-                    password = it
+                    viewModel.password.value = it
                 },
                 placeholder = "Password",
                 icon = Icons.Default.Lock,

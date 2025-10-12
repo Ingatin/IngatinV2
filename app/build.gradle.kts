@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -62,6 +65,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+//  dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.57.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
+
 //  Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
@@ -79,15 +87,15 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
 //    Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.logging.interceptor)
+//    implementation(libs.retrofit)
+//    implementation(libs.converter.gson)
+//    implementation(libs.logging.interceptor)
 
 //    Datastore
-    implementation(libs.androidx.datastore.preferences)
+//    implementation(libs.androidx.datastore.preferences)
 
 //    Livedata
-    implementation(libs.androidx.runtime.livedata)
+//    implementation(libs.androidx.runtime.livedata)
 
 //    Worker
     implementation ("androidx.work:work-runtime-ktx:2.9.0")

@@ -1,11 +1,13 @@
 package id.co.ingatin
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import dagger.hilt.android.HiltAndroidApp
 import id.co.ingatin.ui.screen.auth.LoginScreen
 import id.co.ingatin.ui.screen.auth.RegisterScreen
 import id.co.ingatin.ui.screen.home.HomeScreen
@@ -14,7 +16,7 @@ import id.co.ingatin.ui.screen.task.MyTaskScreen
 import id.co.ingatin.ui.screen.task.TaskScreen
 
 @Composable
-fun IngatinApp(startDestination: String){
+fun IngatinNav(startDestination: String){
 
     val navController = rememberNavController()
 
@@ -58,3 +60,6 @@ fun IngatinApp(startDestination: String){
     }
 
 }
+
+@HiltAndroidApp
+class IngatinApp: Application()

@@ -3,6 +3,7 @@ package id.co.ingatin
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -10,21 +11,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.ViewModelProvider
-import id.co.ingatin.ui.ViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
+import id.co.ingatin.data.network.firebase.FirebaseService
+import id.co.ingatin.data.repository.AuthRepository
 import id.co.ingatin.ui.theme.BrainyTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private lateinit var viewModel: SplashViewModel
+    private val viewModel: SplashViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
-
-        val factory = ViewModelFactory(applicationContext)
-        viewModel = ViewModelProvider(this, factory)[SplashViewModel::class.java]
-
 
         splashScreen.setKeepOnScreenCondition {
             viewModel.isLoading.value
@@ -40,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     val startDestination by viewModel.startDestination.collectAsState()
 
                     if (!isLoading) {
-                        IngatinApp(startDestination)
+                        IngatinNav(startDestination)
                     }
                 }
             }

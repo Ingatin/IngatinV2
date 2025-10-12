@@ -1,55 +1,47 @@
 package id.co.ingatin.ui.screen.auth
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.ingatin.data.model.User
-import id.co.ingatin.data.network.response.LoginResponse
-import id.co.ingatin.data.network.response.RegistResponse
 import id.co.ingatin.data.repository.AuthRepository
 import id.co.ingatin.ui.common.UiState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
-    private val _registerState = MutableStateFlow<UiState<RegistResponse>>(UiState.Empty)
-    val registerState: StateFlow<UiState<RegistResponse>> = _registerState
+    val email = MutableStateFlow("")
+    val password = MutableStateFlow("")
+    val name = MutableStateFlow("")
 
-    private val _registState = MutableStateFlow<UiState<User>>(UiState.Loading)
-    val registState: StateFlow<UiState<User>> = _registState
+    private val _registState = MutableStateFlow<UiState<User>>(UiState.Empty)
+    val registState = _registState.asStateFlow()
 
-    private val _loginState = MutableStateFlow<UiState<LoginResponse>>(UiState.Empty)
-    val loginState: StateFlow<UiState<LoginResponse>> = _loginState
+    private val _loginState = MutableStateFlow<UiState<User>>(UiState.Empty)
+    val loginState = _loginState.asStateFlow()
 
     private val _logoutState = MutableStateFlow(false)
-    val logoutState: StateFlow<Boolean> = _logoutState
-
-    private val _username = MutableStateFlow<String?>(null)
-    val username: StateFlow<String?> = _username
+    val logoutState = _logoutState.asStateFlow()
 
     fun register(username: String, email: String, password: String) {
-        _registerState.value = UiState.Loading
+        _registState.value = UiState.Loading
         viewModelScope.launch {
-            val response = authRepository.register(username, email, password)
+            val response = authRepository.regist(email, password, username)
             response.onSuccess {
-                _registerState.value = UiState.Success(it)
+                _registState.value = UiState.Success(it)
             }.onFailure {
-                _registerState.value = UiState.Error(it.message ?: "Unknown Error")
+                _registState.value = UiState.Error(it.message ?: "Unknown Error")
             }
 
-        }
-    }
-
-    fun regist(email: String, password: String, nama: String){
-        viewModelScope.launch {
-            val res = authRepository.regist(email, password, nama)
-            res.onSuccess {
-
-            }.onFailure {
-
-            }
         }
     }
 
@@ -76,17 +68,5 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
                 _logoutState.value = false
             }
         }
-    }
-
-    fun getUser() {
-        viewModelScope.launch {
-            val response = authRepository.getUser()
-            response.onSuccess {
-                _username.value = it.username
-            }.onFailure {
-                _username.value = null
-            }
-        }
-
     }
 }

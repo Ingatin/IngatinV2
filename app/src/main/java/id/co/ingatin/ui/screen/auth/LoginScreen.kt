@@ -40,27 +40,28 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
 import id.co.ingatin.ui.theme.BrainyTheme
 
 @Composable
 fun LoginScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context)}
-    val viewModel: AuthViewModel = viewModel(factory = factory)
+
+
 
     val loginState by viewModel.loginState.collectAsState()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
 
     var isLoading by remember { mutableStateOf(false) }
 
@@ -121,7 +122,7 @@ fun LoginScreen(
             CustomTextField(
                 values = email,
                 onValueChange = {
-                    email = it
+                    viewModel.email.value = it
                 },
                 placeholder = "Email",
                 icon = Icons.Default.Email,
@@ -133,7 +134,7 @@ fun LoginScreen(
             CustomTextField(
                 values = password,
                 onValueChange = {
-                    password = it
+                    viewModel.password.value = it
                 },
                 placeholder = "Password",
                 icon = Icons.Default.Lock,
