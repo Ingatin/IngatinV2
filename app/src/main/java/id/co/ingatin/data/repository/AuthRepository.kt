@@ -22,4 +22,8 @@ class AuthRepository @Inject constructor(
     fun isUserLoggedIn(): Boolean {
         return firebase.isUserLoggedIn()
     }
+
+    suspend fun getCurrentUser(): Result<User>{
+        return firebase.getCurrentUser()
+    }
 }

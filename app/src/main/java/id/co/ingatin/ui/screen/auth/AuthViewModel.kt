@@ -23,6 +23,9 @@ class AuthViewModel @Inject constructor(
     val password = MutableStateFlow("")
     val name = MutableStateFlow("")
 
+    private val _getUser = MutableStateFlow<UiState<User>>(UiState.Empty)
+    val getUser = _getUser.asStateFlow()
+
     private val _registState = MutableStateFlow<UiState<User>>(UiState.Empty)
     val registState = _registState.asStateFlow()
 
@@ -66,6 +69,18 @@ class AuthViewModel @Inject constructor(
                 _logoutState.value = false
             } catch (e: Exception) {
                 _logoutState.value = false
+            }
+        }
+    }
+
+    fun getUser(){
+        _getUser.value = UiState.Loading
+        viewModelScope.launch {
+            val result = authRepository.getCurrentUser()
+            result.onSuccess {
+                _getUser.value = UiState.Success(it)
+            }.onFailure {
+                _getUser.value = UiState.Error(it.message ?: "Unknown Error")
             }
         }
     }

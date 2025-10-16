@@ -24,13 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import id.co.ingatin.data.network.response.TasksItem
-import id.co.ingatin.ui.screen.notif.getTimeRemainingText
+import id.co.ingatin.data.model.MyTask
 
 
 @Composable
 fun CardMyTask(
-    tasks: TasksItem,
+    tasks: MyTask,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -65,8 +64,7 @@ fun CardMyTask(
                     text = tasks.category,
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(color = MaterialTheme.colorScheme.primary.copy(
-                        ))
+                        .background(color = MaterialTheme.colorScheme.primary)
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                         .width(100.dp),
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -78,7 +76,7 @@ fun CardMyTask(
             }
 
             Text(
-                text = tasks.desc,
+                text = tasks.description,
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Normal,
                     color = Color.White
@@ -90,7 +88,8 @@ fun CardMyTask(
             )
 
             Text(
-                text = getTimeRemainingText(tasks.dueDate),
+//                text = getTimeRemainingText(tasks.dueDate),
+                text = "this time",
                 modifier = Modifier
                     .width(150.dp)
                     .align(Alignment.End)
@@ -113,16 +112,15 @@ fun CardMyTask(
 
 
 
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun CardMyTaskPreview() {
-//    CardMyTask(
-//        title = "Task",
-//        category = "Category",
-//        time = "this time",
-//        desc = "this is description"
-//    )
+    CardMyTask(
+        tasks = MyTask(
+            category = "Academy",
+            title = "abc",
+            description = "abc"
+        ),
+        onClick = {}
+    )
 }

@@ -4,9 +4,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.googleGmsGoogleServices)
+    alias(libs.plugins.googleDevtoolsKsp)
 
-    id("com.google.devtools.ksp")
+//    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
 }
 

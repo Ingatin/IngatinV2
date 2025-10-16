@@ -48,12 +48,12 @@ fun IngatinNav(startDestination: String){
             val taskId = backStackEntry.arguments?.getString("taskId")
             if (taskId != null) {
                 Log.d("DetailTaskScreen_navhost", "Received taskId: $taskId")
-                DetailTaskScreen(navController, taskId)
+//                DetailTaskScreen(navController, taskId)
             }
         }
         composable("MyTask/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "All Task"
-            MyTaskScreen(navController, category)
+//            MyTaskScreen(navController, category)
         }
 
 
