@@ -1,9 +1,6 @@
 package id.co.ingatin.ui.screen.task
 
-import android.R.attr.text
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,15 +31,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.data.model.MyTask
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.headerTask
+import id.co.ingatin.ui.screen.viewModel.TaskViewModel
 import id.co.ingatin.ui.theme.BrainyTheme
-import io.grpc.perfmark.PerfMark.task
-import kotlin.collections.first
 
 
 @Composable

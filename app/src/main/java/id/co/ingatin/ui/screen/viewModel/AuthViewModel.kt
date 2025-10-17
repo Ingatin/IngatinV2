@@ -1,7 +1,5 @@
-package id.co.ingatin.ui.screen.auth
+package id.co.ingatin.ui.screen.viewModel
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -13,7 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,40 +23,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.HomeTabs
 import id.co.ingatin.ui.components.headerTask
-import id.co.ingatin.ui.screen.home.HomeViewModel
+import id.co.ingatin.ui.screen.viewModel.TaskViewModel
 import id.co.ingatin.ui.theme.BrainyTheme
 
 @Composable
-fun MyTaskScreen(navController: NavController, selectedCategoryFromNav: String) {
+fun MyTaskScreen(
+    navController: NavController,
+    viewModel: TaskViewModel = hiltViewModel(),
+    selectedCategoryFromNav: String
+) {
 
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context) }
-    val viewModel: HomeViewModel = viewModel(factory = factory)
+
+    val taskList by viewModel.myTasks.collectAsState()
 
     var selectedCategory by remember { mutableStateOf(selectedCategoryFromNav) }
 
-    val taskList by if (selectedCategory == "All Task") {
-        viewModel.taskAll.collectAsState()
-    } else {
-        viewModel.taskCategory.collectAsState()
-    }
+//    val taskList by if (selectedCategory == "All Task") {
+//        viewModel.taskAll.collectAsState()
+//    } else {
+//        viewModel.taskCategory.collectAsState()
+//    }
 
 
-    LaunchedEffect(selectedCategory) {
-        if (selectedCategory == "All Task") {
-            viewModel.getAllTasks()
-        } else {
-            viewModel.getTasksByCategory(selectedCategory)
-        }
-    }
+//    LaunchedEffect(selectedCategory) {
+//        if (selectedCategory == "All Task") {
+//            viewModel.getAllTasks()
+//        } else {
+//            viewModel.getTasksByCategory(selectedCategory)
+//        }
+//    }
 
     Column(
         modifier = Modifier
@@ -80,14 +82,14 @@ fun MyTaskScreen(navController: NavController, selectedCategoryFromNav: String) 
 
         when (taskList) {
             is UiState.Success -> {
-                val tasks = (taskList as UiState.Success).data.orEmpty()
+                val tasks = (taskList as UiState.Success).data
                 tasks.forEach { task ->
                     CardMyTask(
                         tasks = task,
                         modifier = Modifier
                             .padding(bottom = 8.dp),
                         onClick = {
-                            navController.navigate("DetailTask/${task.taskId}")
+//                            navController.navigate("DetailTask/${task.taskId}")
                         }
                     )
                 }

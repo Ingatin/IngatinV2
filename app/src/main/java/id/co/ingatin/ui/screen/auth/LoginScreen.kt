@@ -46,6 +46,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
+import id.co.ingatin.ui.screen.viewModel.AuthViewModel
 import id.co.ingatin.ui.theme.BrainyTheme
 
 @Composable

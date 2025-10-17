@@ -33,7 +33,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -49,6 +48,7 @@ import id.co.ingatin.R
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.ButtonCategory
 import id.co.ingatin.ui.components.headerTask
+import id.co.ingatin.ui.screen.viewModel.TaskViewModel
 import id.co.ingatin.ui.theme.BrainyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
