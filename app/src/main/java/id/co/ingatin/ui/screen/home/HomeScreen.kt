@@ -155,6 +155,7 @@ fun HomeScreen(
                 when (val state = taskState) {
                     is UiState.Success -> {
                         val tasks = state.data.orEmpty()
+                        Log.d("HomeScreen", "tasks: $tasks")
                         if (tasks.isEmpty()) {
                             Text(text = "No tasks available")
                         }
@@ -164,14 +165,17 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .padding(bottom = 8.dp),
                                 onClick = {
-//                                navController.navigate("DetailTask/${task.taskId}")
+                                    navController.navigate("DetailTask/${task.taskId}")
                                 }
                             )
                         }
                     }
+
                     is UiState.Error -> {
                         Text(text = (state.errorMessage))
-                    }else -> Unit
+                    }
+
+                    else -> Unit
                 }
             }
         }

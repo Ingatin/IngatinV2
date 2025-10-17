@@ -144,14 +144,13 @@ class FirebaseService @Inject constructor(
             Log.e(TASK, "getTaskById:failure")
             Result.failure(e)
         }
-
     }
 
 
     companion object {
-        private const val AUTH = "Authentication"
-        private const val HOME = "Home"
-        private const val TASK = "Task"
+        private const val AUTH = "Auth FirebaseService"
+        private const val HOME = "Home FirebaseService"
+        private const val TASK = "Task FirebaseService"
     }
 
 

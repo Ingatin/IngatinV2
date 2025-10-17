@@ -16,22 +16,22 @@ import id.co.ingatin.ui.screen.task.MyTaskScreen
 import id.co.ingatin.ui.screen.task.TaskScreen
 
 @Composable
-fun IngatinNav(startDestination: String){
+fun IngatinNav(startDestination: String) {
 
     val navController = rememberNavController()
 
-    NavHost(navController, startDestination = startDestination){
-        composable("login"){
+    NavHost(navController, startDestination = startDestination) {
+        composable("login") {
             LoginScreen(navController)
         }
-        composable("register"){
+        composable("register") {
             RegisterScreen(navController)
         }
-        composable("home"){
+        composable("home") {
             HomeScreen(navController)
         }
         composable("task") {
-            TaskScreen(navController = navController, taskId = null) // Create Task
+            TaskScreen(navController)
         }
 
         composable(
@@ -44,13 +44,13 @@ fun IngatinNav(startDestination: String){
                 taskId = if (taskId.isNullOrEmpty()) null else taskId
             ) // Edit Task
         }
+
         composable("DetailTask/{taskId}") { backStackEntry ->
-            val taskId = backStackEntry.arguments?.getString("taskId")
-            if (taskId != null) {
-                Log.d("DetailTaskScreen_navhost", "Received taskId: $taskId")
-//                DetailTaskScreen(navController, taskId)
-            }
+            val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
+            Log.d("DetailTaskScreen_navhost", "Received taskId: $taskId")
+            DetailTaskScreen(navController, taskId = taskId)
         }
+
         composable("MyTask/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "All Task"
 //            MyTaskScreen(navController, category)
@@ -62,4 +62,4 @@ fun IngatinNav(startDestination: String){
 }
 
 @HiltAndroidApp
-class IngatinApp: Application()
+class IngatinApp : Application()

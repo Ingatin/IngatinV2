@@ -31,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,11 +42,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.R
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.ButtonCategory
 import id.co.ingatin.ui.components.headerTask
@@ -57,88 +55,34 @@ import id.co.ingatin.ui.theme.BrainyTheme
 @Composable
 fun TaskScreen(
     navController: NavController,
+    viewModel: TaskViewModel = hiltViewModel(),
     taskId: String? = null
 ) {
-
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-
-    var selectCategory by remember { mutableStateOf<String?>(null) }
-
-    val categories = listOf("Work", "Academy")
-
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context) }
-    val viewModel: TaskViewModel = viewModel(factory = factory)
 
-    val createTask by viewModel.createTask.collectAsState()
+    val title by viewModel.title.collectAsState()
+    val description by viewModel.description.collectAsState()
 
-    val date by viewModel.date.observeAsState("")
-    val time by viewModel.time.observeAsState("")
+    val categories = viewModel.categories
 
-    val dateTime by viewModel.dateTime.observeAsState("")
+    val selectCategory by viewModel.selectCategory.collectAsState()
 
-    val taskDetailState by viewModel.taskDetail.collectAsState()
 
     val showDialog = remember { mutableStateOf(false) }
 
+    val createTaskState by viewModel.createTaskState.collectAsState()
 
-    LaunchedEffect(taskId) {
-        taskId?.let {
-            viewModel.getTaskById(it)
-        }
-    }
+    val isLoading = createTaskState is UiState.Loading
 
-    LaunchedEffect(taskDetailState) {
-        if (taskId != null) {
-            when (val state = taskDetailState) {
-                is UiState.Success -> {
-                    state.data?.firstOrNull()?.let { task ->
-                        title = task.title ?: ""
-                        description = task.desc ?: ""
-                        selectCategory = task.category ?: ""
-                        // Format waktu & tanggal jika datanya tersedia
-                        task.dueDate?.let { dueDate ->
-                            val parts = dueDate.split(" ")
-                            if (parts.size == 2) {
-                                viewModel.setDate(parts[0])
-                                viewModel.setTime(parts[1])
-                            }
-                        }
-                    }
-                }
+//    val date by viewModel.date.observeAsState("")
+//    val time by viewModel.time.observeAsState("")
+//
+//    val dateTime by viewModel.dateTime.observeAsState("")
+//
+//    val taskDetailState by viewModel.taskDetail.collectAsState()
 
-                is UiState.Error -> {
-                    Toast.makeText(context, "Failed to load task", Toast.LENGTH_SHORT).show()
-                }
-
-                else -> Unit
-            }
-        }
-    }
-
-    val editTask by viewModel.editTask.collectAsState()
-
-    LaunchedEffect(editTask) {
-        if (taskId != null) {
-            when (val state = editTask) {
-                is UiState.Success -> {
-                    Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
-                    navController.popBackStack()
-                }
-
-                is UiState.Error -> {
-                    Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
-                }
-
-                else -> Unit
-            }
-        }
-    }
-
-
-    LaunchedEffect(createTask) {
-        when (val state = createTask) {
+    LaunchedEffect(createTaskState) {
+        when (val state = createTaskState) {
             is UiState.Success -> {
                 Toast.makeText(context, "Task created!", Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
@@ -151,6 +95,64 @@ fun TaskScreen(
             else -> Unit
         }
     }
+
+
+
+//    LaunchedEffect(taskId) {
+//        taskId?.let {
+//            viewModel.getTaskById(it)
+//        }
+//    }
+//
+//    LaunchedEffect(taskDetailState) {
+//        if (taskId != null) {
+//            when (val state = taskDetailState) {
+//                is UiState.Success -> {
+//                    state.data?.firstOrNull()?.let { task ->
+//                        title = task.title ?: ""
+//                        description = task.desc ?: ""
+//                        selectCategory = task.category ?: ""
+//                        // Format waktu & tanggal jika datanya tersedia
+//                        task.dueDate?.let { dueDate ->
+//                            val parts = dueDate.split(" ")
+//                            if (parts.size == 2) {
+//                                viewModel.setDate(parts[0])
+//                                viewModel.setTime(parts[1])
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                is UiState.Error -> {
+//                    Toast.makeText(context, "Failed to load task", Toast.LENGTH_SHORT).show()
+//                }
+//
+//                else -> Unit
+//            }
+//        }
+//    }
+
+//    val editTask by viewModel.editTask.collectAsState()
+
+//    LaunchedEffect(editTask) {
+//        if (taskId != null) {
+//            when (val state = editTask) {
+//                is UiState.Success -> {
+//                    Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
+//                    navController.popBackStack()
+//                }
+//
+//                is UiState.Error -> {
+//                    Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
+//                }
+//
+//                else -> Unit
+//            }
+//        }
+//    }
+//
+//
+
 
     if (showDialog.value) {
         AlertDialog(
@@ -177,26 +179,26 @@ fun TaskScreen(
                     onClick = {
                         showDialog.value = false
                         val selectedCategory = selectCategory ?: ""
-                        val finalDateTime = dateTime ?: ""
+//                        val finalDateTime = dateTime ?: ""
 
-                        if (taskId != null) {
-                            viewModel.editTask(
-                                taskId = taskId,
-                                category = selectedCategory,
-                                dueDate = finalDateTime,
-                                title = title,
-                                desc = description,
-                                context = context
-                            )
-                        } else {
-                            viewModel.createTask(
-                                category = selectedCategory,
-                                dueDate = finalDateTime,
-                                title = title,
-                                desc = description,
-                                context = context
-                            )
-                        }
+//                        if (taskId != null) {
+//                            viewModel.editTask(
+//                                taskId = taskId,
+//                                category = selectedCategory,
+//                                dueDate = finalDateTime,
+//                                title = title,
+//                                desc = description,
+//                                context = context
+//                            )
+//                        } else {
+//                            viewModel.createTask(
+//                                category = selectedCategory,
+//                                dueDate = finalDateTime,
+//                                title = title,
+//                                desc = description,
+//                                context = context
+//                            )
+//                        }
                     }
                 ) {
                     Text(
@@ -243,7 +245,7 @@ fun TaskScreen(
         OutlinedTextField(
             value = title,
             onValueChange = {
-                title = it
+                viewModel.title.value = it
             },
             placeholder = {
                 Text(
@@ -267,13 +269,13 @@ fun TaskScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedTextField(
-                value = time,
+                value = "",
                 onValueChange = {},
                 placeholder = { Text("Time") },
                 readOnly = true,
                 trailingIcon = {
                     IconButton(onClick = {
-                        viewModel.selectTime(context)
+//                        viewModel.selectTime(context)
                     }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_clock),
@@ -290,13 +292,13 @@ fun TaskScreen(
                 shape = RoundedCornerShape(14.dp),
             )
             OutlinedTextField(
-                value = date,
+                value = "",
                 onValueChange = {},
                 placeholder = { Text("Date") },
                 readOnly = true,
                 trailingIcon = {
                     IconButton(onClick = {
-                        viewModel.selectDate(context)
+//                        viewModel.selectDate(context)
                     }) {
                         Icon(
                             imageVector = Icons.Default.DateRange,
@@ -325,7 +327,7 @@ fun TaskScreen(
                 ButtonCategory(
                     btnTitle = category,
                     onCategoryClick = { selected ->
-                        selectCategory = selected
+                        viewModel.selectCategory.value = selected
                     },
                     isSelected = selectCategory == category
                 )
@@ -335,7 +337,7 @@ fun TaskScreen(
         OutlinedTextField(
             value = description,
             onValueChange = {
-                description = it
+                viewModel.description.value = it
             },
             placeholder = {
                 Text(
@@ -355,7 +357,8 @@ fun TaskScreen(
         )
         Button(
             onClick = {
-                showDialog.value = true
+                viewModel.createTask(title, selectCategory, description)
+//                showDialog.value = true
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),

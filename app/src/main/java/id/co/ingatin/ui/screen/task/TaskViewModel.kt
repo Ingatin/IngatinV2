@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import id.co.ingatin.data.model.MyTask
 import id.co.ingatin.data.repository.TaskRepository
 import id.co.ingatin.ui.common.UiState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -38,8 +39,8 @@ class TaskViewModel @Inject constructor(
 
     private fun updateTaskCount(tasks: List<MyTask>) {
         allCount.value = tasks.size
-        workCount.value = tasks.count{ it.category.equals("Work", ignoreCase = true)}
-        academyCount.value = tasks.count{ it.category.equals("Academy", ignoreCase = true)}
+        workCount.value = tasks.count { it.category.equals("Work", ignoreCase = true) }
+        academyCount.value = tasks.count { it.category.equals("Academy", ignoreCase = true) }
     }
 
     fun createTask(
@@ -78,7 +79,9 @@ class TaskViewModel @Inject constructor(
 
     fun getTaskById(taskId: String) {
         _taskDetail.value = UiState.Loading
+        Log.d("TaskViewModel", "getTaskById: $taskId")
         viewModelScope.launch {
+            delay(1000L)
             val response = taskRepository.getTaskById(taskId)
             response.onSuccess {
                 _taskDetail.value = UiState.Success(it)
