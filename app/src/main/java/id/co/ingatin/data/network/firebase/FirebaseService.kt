@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import id.co.ingatin.data.model.MyTask
 import id.co.ingatin.data.model.User
+import io.grpc.perfmark.PerfMark.task
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -61,7 +62,7 @@ class FirebaseService @Inject constructor(
         auth.signOut()
     }
 
-    suspend fun getCurrentUser(): Result<User>{
+    suspend fun getCurrentUser(): Result<User> {
         return try {
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
             val user = firestore.collection("users")
@@ -71,7 +72,7 @@ class FirebaseService @Inject constructor(
                 .toObject(User::class.java) ?: throw Exception("User not found")
             Log.d(HOME, "User: $user")
             Result.success(user)
-        } catch (e: Exception){
+        } catch (e: Exception) {
             Log.e(HOME, "getCurrentUser:failure", e)
             Result.failure(e)
         }
@@ -105,10 +106,10 @@ class FirebaseService @Inject constructor(
                 .collection("tasks")
                 .get()
                 .await()
-                .toObjects(MyTask::class.java) ?: throw Exception("Tasks not found")
+                .toObjects(MyTask::class.java)
             Log.d(TASK, "getTasks:success")
             Result.success(tasks)
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
@@ -121,16 +122,16 @@ class FirebaseService @Inject constructor(
                 .whereEqualTo("category", category)
                 .get()
                 .await()
-                .toObjects(MyTask::class.java) ?: throw Exception("Tasks not found")
+                .toObjects(MyTask::class.java)
             Log.d(TASK, "getTaskByCategory:success")
             Result.success(tasks)
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.e(TASK, "getTaskByCategory:failure")
             Result.failure(e)
         }
     }
 
-    suspend fun getTaskById(taskId: String): Result<MyTask>{
+    suspend fun getTaskById(taskId: String): Result<MyTask> {
         return try {
             val uId = auth.currentUser?.uid ?: throw Exception("User ID not found")
             val task = firestore.collection("users").document(uId)
@@ -140,10 +141,28 @@ class FirebaseService @Inject constructor(
                 .toObject(MyTask::class.java) ?: throw Exception("Task not found")
             Log.d(TASK, "getTaskById:success")
             Result.success(task)
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Log.e(TASK, "getTaskById:failure")
             Result.failure(e)
         }
+    }
+
+    suspend fun editTaskById(taskId: String, updateTask: MyTask) {
+        val uId = auth.currentUser?.uid ?: throw Exception("User ID not found")
+        firestore.collection("users").document(uId)
+            .collection("tasks").document(taskId)
+            .set(
+                updateTask.copy(taskId = taskId)
+            )
+            .await()
+    }
+
+    suspend fun deleteTaskById(taskId: String) {
+        val uId = auth.currentUser?.uid ?: throw Exception("User ID not found")
+        firestore.collection("users").document(uId)
+            .collection("tasks").document(taskId)
+            .delete()
+            .await()
     }
 
 

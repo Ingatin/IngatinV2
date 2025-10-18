@@ -1,5 +1,6 @@
 package id.co.ingatin.data.repository
 
+import android.util.Log
 import id.co.ingatin.data.model.MyTask
 import id.co.ingatin.data.network.firebase.FirebaseService
 import javax.inject.Inject
@@ -11,11 +12,11 @@ class TaskRepository @Inject constructor(
         return firebase.createTasks(title, category, description)
     }
 
-    suspend fun getAllTasks(): Result<List<MyTask>>{
+    suspend fun getAllTasks(): Result<List<MyTask>> {
         return firebase.getAllTasks()
     }
 
-    suspend fun getTaskByCategory(category: String): Result<List<MyTask>>{
+    suspend fun getTaskByCategory(category: String): Result<List<MyTask>> {
         return firebase.getTaskByCategory(category)
     }
 
@@ -23,109 +24,31 @@ class TaskRepository @Inject constructor(
         return firebase.getTaskById(taskId)
     }
 
+    suspend fun editTaskById(taskId: String, updateTask: MyTask): Result<Boolean> {
+        return try {
+            firebase.editTaskById(taskId, updateTask)
+            Log.d(TASK, "editTaskById success: taskId = $taskId & updateTask = $updateTask")
+            Result.success(true)
+        } catch (e: Exception) {
+            Log.e(TASK, "editTaskById failure: taskId = $taskId")
+            Result.failure(e)
+        }
+    }
 
+    suspend fun deleteTaskById(taskId: String): Result<Boolean> {
+        return try {
+            firebase.deleteTaskById(taskId)
+            Log.d(TASK, "deleteTaskById success: taskId = $taskId")
+            Result.success(true)
+        } catch (e: Exception) {
+            Log.e(TASK, "deleteTaskById failure: taskId = $taskId")
+            Result.failure(e)
+        }
+    }
+
+
+    companion object {
+        private const val TASK = "TaskRepository"
+    }
 
 }
-
-
-//    suspend fun getAllTasks(): Result<List<TasksItem>?>{
-//        return try {
-//            val token = userPreferences.getToken().first()
-//            val userId = userPreferences.getUserId().first()
-//
-//            if (token.isNullOrEmpty() || userId.isNullOrEmpty()) {
-//                return Result.failure(Exception("Token atau UserId kosong"))
-//            }
-//
-//            val response = apiService.getAllTasks(ApiConfig.getAuthHeader(token), userId)
-//            Result.success(response.tasks)
-//        } catch (e: Exception){
-//            val message = parseErrorMessage(e)
-//            Result.failure(Exception(message))
-//        }
-//    }
-//
-//    suspend fun getTaskByCategory(category: String): Result<List<TasksItem>?>{
-//        return try {
-//            val token = userPreferences.getToken().first()
-//            val userId = userPreferences.getUserId().first()
-//
-//            if (token.isNullOrEmpty() || userId.isNullOrEmpty()) {
-//                return Result.failure(Exception("Token atau UserId kosong"))
-//            }
-//
-//            val response = apiService.getTaskByCategory(ApiConfig.getAuthHeader(token),userId, category)
-//            Result.success(response.tasks)
-//        } catch (e: Exception){
-//            val message = parseErrorMessage(e)
-//            Result.failure(Exception(message))
-//        }
-//    }
-//
-//    suspend fun getTaskById(taskId: String): Result<List<TasksItem>?>{
-//        return try {
-//            val token = userPreferences.getToken().first()
-//
-//            val response = apiService.getTaskById(ApiConfig.getAuthHeader(token),taskId)
-//            Log.d("TaskRepository", "getTaskById: $response")
-//            Result.success(response.tasks)
-//        } catch (e: Exception){
-//            val message = parseErrorMessage(e)
-//            Result.failure(Exception(message))
-//        }
-//    }
-//
-//
-//    suspend fun editTask(
-//        taskId: String,
-//        category: String,
-//        dueDate: String,
-//        title: String,
-//        desc: String
-//    ): Result<TasksItem> {
-//        return try {
-//            val token = userPreferences.getToken().first()
-//            val userId = userPreferences.getUserId().first()
-//
-//            if (token.isNullOrEmpty() || userId.isNullOrEmpty()) {
-//                return Result.failure(Exception("Token atau UserId kosong"))
-//            }
-//
-//            val request = TaskReq(
-//                category = category,
-//                dueDate = dueDate,
-//                title = title,
-//                userId = userId,
-//                desc = desc
-//            )
-//
-//            val response = apiService.editTask(
-//                token = ApiConfig.getAuthHeader(token),
-//                taskId = taskId,
-//                request = request
-//            )
-//
-//            Result.success(response)
-//        } catch (e: Exception) {
-//            val message = parseErrorMessage(e)
-//            Result.failure(Exception(message))
-//        }
-//    }
-//
-//    suspend fun deleteTask(
-//        taskId: String
-//    ): Result<DeleteResponse> {
-//        return try {
-//            val token = userPreferences.getToken().first()
-//            Log.d("deleteTaskRepository", "getTaskById: $taskId")
-//            val response = apiService.deleteTask(
-//                ApiConfig.getAuthHeader(token),
-//                taskId
-//            )
-//            Log.d("deleteTaskRepository", "getTaskById: $response")
-//            Result.success(response)
-//        } catch (e: Exception){
-//            val message = parseErrorMessage(e)
-//            Result.failure(Exception(message))
-//        }
-//    }

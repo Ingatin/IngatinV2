@@ -53,7 +53,7 @@ fun MyTaskScreen(
     var selectedCategory by remember { mutableStateOf(category) }
 
     LaunchedEffect(selectedCategory) {
-        viewModel.getMyTasks(selectedCategory)
+        viewModel.getTaskByCategory(selectedCategory)
     }
 
     Box(

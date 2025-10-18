@@ -1,6 +1,7 @@
 package id.co.ingatin.ui.screen.task
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +39,7 @@ import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.screen.viewModel.TaskViewModel
 import id.co.ingatin.ui.theme.BrainyTheme
+import io.grpc.perfmark.PerfMark.task
 
 
 @Composable
@@ -47,135 +50,151 @@ fun DetailTaskScreen(
     val context = LocalContext.current
 
     val taskDetail by viewModel.taskDetail.collectAsState()
+    val deleteTask by viewModel.deleteTask.collectAsState()
+
 
     LaunchedEffect(taskId) {
         viewModel.getTaskById(taskId)
+    }
+
+    LaunchedEffect(deleteTask) {
+        if (deleteTask is UiState.Success) {
+            navController.navigate("home") {
+                popUpTo(0)
+            }
+        }
+
     }
 
     val showDialog = remember { mutableStateOf(false) }
 
 
     if (showDialog.value) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showDialog.value = false },
-            title = {
-                Text(
-                    text = "Confirm Delete",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
+        AlertDialog(onDismissRequest = { showDialog.value = false }, title = {
+            Text(
+                text = "Confirm Delete", style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.tertiary
                 )
-            },
-            text = { Text("Are you sure you want to delete this task?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-//                        viewModel.deleteTask(taskId)
-                    }) {
-                    Text(
-                        text = "Delete",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showDialog.value = false }) {
-                    Text(
-                        text = "Cancel", style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                }
-            })
-    }
-    when (val task = taskDetail) {
-        is UiState.Success -> {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-            ) {
-                headerTask(
-                    titleHeader = task.data.category,
-                    navController = navController
-                )
-                Spacer(modifier = Modifier.height(32.dp))
+            )
+        }, text = { Text("Are you sure you want to delete this task?") }, confirmButton = {
+            Button(
+                onClick = {
+                    showDialog.value = false
+                    viewModel.deleteTaskById(taskId)
+                }) {
                 Text(
-                    text = task.data.title, style = MaterialTheme.typography.titleLarge.copy(
+                    text = "Delete", style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.tertiary
                     )
                 )
-                Text(
-                    text = "task.dueDate", style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.SemiBold, color = Color.Black
-                    ), modifier = Modifier.padding(bottom = 32.dp, top = 8.dp)
-                )
-
-                Text(
-                    text = task.data.description,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold, color = Color.Black
-                    ),
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            navController.navigate("task/$taskId")
-
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(
-                            text = "Edit", style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ), color = Color.White, modifier = Modifier.padding(6.dp)
-                        )
-                    }
-                    Button(
-                        onClick = {
-                            showDialog.value = true
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(
-                            text = "Delete", style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold
-                            ), color = Color.White, modifier = Modifier.padding(6.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
             }
-        }
+        }, dismissButton = {
+            Button(
+                onClick = { showDialog.value = false }) {
+                Text(
+                    text = "Cancel", style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.tertiary
+                    )
+                )
+            }
+        })
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (val task = taskDetail) {
+            is UiState.Success -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                ) {
+                    headerTask(
+                        titleHeader = task.data.category, navController = navController
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text(
+                        text = task.data.title, style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    )
+                    Text(
+                        text = "task.dueDate", style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold, color = Color.Black
+                        ), modifier = Modifier.padding(bottom = 32.dp, top = 8.dp)
+                    )
 
-        is UiState.Loading -> {
+                    Text(
+                        text = task.data.description,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold, color = Color.Black
+                        ),
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                navController.navigate("task/$taskId")
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text(
+                                text = "Edit", style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ), color = Color.White, modifier = Modifier.padding(6.dp)
+                            )
+                        }
+                        Button(
+                            onClick = {
+                                showDialog.value = true
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text(
+                                text = "Delete", style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                ), color = Color.White, modifier = Modifier.padding(6.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                }
+            }
+            is UiState.Loading -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Memuat data tugas...", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+
+            else -> Unit
+        }
+        if (deleteTask is UiState.Loading) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -185,12 +204,12 @@ fun DetailTaskScreen(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Memuat data tugas...", style = MaterialTheme.typography.bodyMedium)
+                Text("Menghapus tugas...", style = MaterialTheme.typography.bodyMedium)
             }
         }
 
-        else -> Unit
     }
+
 }
 
 

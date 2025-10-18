@@ -70,8 +70,12 @@ fun HomeScreen(
 
     var selectedOption by remember { mutableStateOf("All Task") }
 
+    LaunchedEffect(Unit) {
+        taskViewModel.getTask()
+    }
+
     LaunchedEffect(selectedOption) {
-        taskViewModel.getMyTasks(selectedOption)
+        taskViewModel.getTaskByCategory(selectedOption)
     }
 
     Box(

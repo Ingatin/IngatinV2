@@ -34,11 +34,7 @@ fun FilterTask(
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 14.sp,
             ),
-            textDecoration = TextDecoration.Underline,
-            modifier = Modifier
-                .clickable {
-                    expanded = true
-                }
+            textDecoration = TextDecoration.Underline
         )
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,

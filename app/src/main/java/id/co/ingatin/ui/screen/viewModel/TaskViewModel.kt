@@ -37,6 +37,9 @@ class TaskViewModel @Inject constructor(
     private val _taskDetail = MutableStateFlow<UiState<MyTask>>(UiState.Empty)
     val taskDetail = _taskDetail.asStateFlow()
 
+    private val _deleteTask = MutableStateFlow<UiState<Boolean>>(UiState.Empty)
+    val deleteTask = _deleteTask.asStateFlow()
+
     private fun updateTaskCount(tasks: List<MyTask>) {
         allCount.value = tasks.size
         workCount.value = tasks.count { it.category.equals("Work", ignoreCase = true) }
@@ -60,17 +63,25 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun getMyTasks(category: String) {
+    fun getTask() {
         _myTasks.value = UiState.Loading
         viewModelScope.launch {
-            val response = if (category == "All Task") {
-                taskRepository.getAllTasks()
-            } else {
-                taskRepository.getTaskByCategory(category)
-            }
+            val response = taskRepository.getAllTasks()
             response.onSuccess {
                 _myTasks.value = UiState.Success(it)
                 updateTaskCount(it)
+            }.onFailure {
+                _myTasks.value = UiState.Error(it.message ?: "Unknown Error")
+            }
+        }
+    }
+
+    fun getTaskByCategory(category: String) {
+        _myTasks.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.getTaskByCategory(category)
+            response.onSuccess {
+                _myTasks.value = UiState.Success(it)
             }.onFailure {
                 _myTasks.value = UiState.Error(it.message ?: "Unknown Error")
             }
@@ -90,5 +101,24 @@ class TaskViewModel @Inject constructor(
             }
         }
     }
+
+    fun editTaskById(taskId: String) {
+
+    }
+
+    fun deleteTaskById(taskId: String) {
+        _deleteTask.value = UiState.Loading
+        Log.d("TaskViewModel", "getTaskById: $taskId")
+        viewModelScope.launch {
+            delay(1000L)
+            val response = taskRepository.deleteTaskById(taskId)
+            response.onSuccess {
+                _deleteTask.value = UiState.Success(it)
+            }.onFailure {
+                _deleteTask.value = UiState.Error(it.message ?: "Unknown Error")
+            }
+        }
+    }
+
 
 }
