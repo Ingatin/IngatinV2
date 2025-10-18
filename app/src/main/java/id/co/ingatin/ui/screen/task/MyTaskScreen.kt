@@ -1,5 +1,9 @@
 package id.co.ingatin.ui.screen.task
 
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,85 +43,91 @@ import id.co.ingatin.ui.theme.BrainyTheme
 fun MyTaskScreen(
     navController: NavController,
     viewModel: TaskViewModel = hiltViewModel(),
-    selectedCategoryFromNav: String
+    category: String
 ) {
 
     val context = LocalContext.current
 
-    val taskList by viewModel.myTasks.collectAsState()
+    val taskState by viewModel.myTasks.collectAsState()
 
-    var selectedCategory by remember { mutableStateOf(selectedCategoryFromNav) }
+    var selectedCategory by remember { mutableStateOf(category) }
 
-//    val taskList by if (selectedCategory == "All Task") {
-//        viewModel.taskAll.collectAsState()
-//    } else {
-//        viewModel.taskCategory.collectAsState()
-//    }
+    LaunchedEffect(selectedCategory) {
+        viewModel.getMyTasks(selectedCategory)
+    }
 
-
-//    LaunchedEffect(selectedCategory) {
-//        if (selectedCategory == "All Task") {
-//            viewModel.getAllTasks()
-//        } else {
-//            viewModel.getTasksByCategory(selectedCategory)
-//        }
-//    }
-
-    Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        headerTask(
-            titleHeader = "My Task",
-            navController = navController
-        )
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            headerTask(
+                titleHeader = "My Task",
+                navController = navController
+            )
 
-        Spacer(modifier = Modifier.height(31.dp))
+            Spacer(modifier = Modifier.height(31.dp))
 
-        HomeTabs(
-            selectedCategory = selectedCategory,
-            onCategorySelected = { selectedCategory = it }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+            HomeTabs(
+                selectedCategory = selectedCategory,
+                onCategorySelected = { selectedCategory = it }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
 
-        when (taskList) {
-            is UiState.Success -> {
-                val tasks = (taskList as UiState.Success).data
-                tasks.forEach { task ->
-                    CardMyTask(
-                        tasks = task,
+            when (val state = taskState) {
+                is UiState.Success -> {
+                    val tasks = state.data.orEmpty()
+                    Log.d("MyTaskScreen", "tasks: $tasks")
+                    if (tasks.isEmpty()) {
+                        Text(text = "No tasks available")
+                    }
+                    tasks.forEach { task ->
+                        CardMyTask(
+                            tasks = task,
+                            modifier = Modifier
+                                .padding(bottom = 8.dp),
+                            onClick = {
+                                navController.navigate("DetailTask/${task.taskId}")
+                            }
+                        )
+                    }
+                }
+                is UiState.Loading -> {
+                    Column(
                         modifier = Modifier
-                            .padding(bottom = 8.dp),
-                        onClick = {
-//                            navController.navigate("DetailTask/${task.taskId}")
-                        }
-                    )
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
-            }
-            is UiState.Loading -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary
-                    )
+
+                is UiState.Error -> {
+                    Text(text = (state.errorMessage))
                 }
-            }
 
-            is UiState.Error -> {
-                Text(text = (taskList as UiState.Error).errorMessage)
-            }
-
-            else -> {
-                Text("Belum ada data")
+                else -> Unit
             }
         }
-
+        if (taskState is UiState.Loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(enabled = false) {} // supaya tidak bisa diklik
+                    .align(Alignment.Center),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+            }
+        }
     }
 }
 

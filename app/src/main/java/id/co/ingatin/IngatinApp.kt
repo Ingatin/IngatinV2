@@ -52,8 +52,8 @@ fun IngatinNav(startDestination: String) {
         }
 
         composable("MyTask/{category}") { backStackEntry ->
-            val category = backStackEntry.arguments?.getString("category") ?: "All Task"
-//            MyTaskScreen(navController, category)
+            val category = backStackEntry.arguments?.getString("category") ?: ""
+            MyTaskScreen(navController, category = category)
         }
 
 
