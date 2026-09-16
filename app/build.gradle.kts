@@ -6,9 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.googleGmsGoogleServices)
     alias(libs.plugins.googleDevtoolsKsp)
-
-//    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.dagger.hilt.android)
 }
 
 android {
@@ -77,26 +75,13 @@ dependencies {
     implementation(libs.firebase.firestore)
 
 //    Coroutiness
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-
 
 //    SplashScreen
     implementation(libs.androidx.core.splashscreen)
 
 //    Navigation
     implementation(libs.androidx.navigation.compose)
-
-//    Retrofit
-//    implementation(libs.retrofit)
-//    implementation(libs.converter.gson)
-//    implementation(libs.logging.interceptor)
-
-//    Datastore
-//    implementation(libs.androidx.datastore.preferences)
-
-//    Livedata
-//    implementation(libs.androidx.runtime.livedata)
 
 //    Worker
     implementation ("androidx.work:work-runtime-ktx:2.9.0")
