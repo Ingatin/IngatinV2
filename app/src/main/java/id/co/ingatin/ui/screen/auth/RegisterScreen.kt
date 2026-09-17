@@ -1,7 +1,5 @@
 package id.co.ingatin.ui.screen.auth
 
-import android.R.attr.password
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -30,9 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,13 +40,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
 import id.co.ingatin.ui.screen.viewModel.AuthViewModel
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
 fun RegisterScreen(
@@ -63,6 +57,9 @@ fun RegisterScreen(
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
     val username by viewModel.name.collectAsState()
+    val nameError by viewModel.nameError.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
 
     val registerState by viewModel.registState.collectAsState()
 
@@ -71,12 +68,11 @@ fun RegisterScreen(
     LaunchedEffect(registerState) {
         when (val state = registerState) {
             is UiState.Success -> {
-                Toast.makeText(context, "Registrasi berhasil", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
                 navController.navigate("login") {
                     popUpTo("register") { inclusive = true }
                 }
             }
-
             is UiState.Error -> {
                 Toast.makeText(context, "Gagal daftar: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
             }
@@ -125,38 +121,44 @@ fun RegisterScreen(
             CustomTextField(
                 values = username,
                 onValueChange = {
-                    viewModel.name.value = it
+                    viewModel.updateName(it)
                 },
                 placeholder = "Username",
                 icon = Icons.Default.AccountCircle,
                 contentDescription = "username Icon",
                 keyboardType = KeyboardType.Text,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = nameError != null,
+                errorMessage = nameError
             )
             Spacer(modifier = Modifier.height(24.dp))
             CustomTextField(
                 values = email,
                 onValueChange = {
-                    viewModel.email.value = it
+                    viewModel.updateEmail(it)
                 },
                 placeholder = "Email",
                 icon = Icons.Default.Email,
                 contentDescription = "Email Icon",
                 keyboardType = KeyboardType.Email,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = emailError != null,
+                errorMessage = emailError
             )
             Spacer(modifier = Modifier.height(24.dp))
             CustomTextField(
                 values = password,
                 onValueChange = {
-                    viewModel.password.value = it
+                    viewModel.updatePassword(it)
                 },
                 placeholder = "Password",
                 icon = Icons.Default.Lock,
                 contentDescription = "Password Icon",
                 keyboardType = KeyboardType.Password,
                 isPasswordField = true,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = passwordError != null,
+                errorMessage = passwordError
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
@@ -199,7 +201,7 @@ fun RegisterScreen(
 @Preview(showBackground = true)
 @Composable
 fun RegisterScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

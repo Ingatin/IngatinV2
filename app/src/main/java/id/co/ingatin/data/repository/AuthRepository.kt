@@ -12,13 +12,13 @@ class AuthRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
 
-    suspend fun register(email: String, password: String, nama: String): Result<String> {
+    suspend fun register(email: String, password: String, name: String): Result<String> {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val id = authResult.user?.uid ?: throw Exception("User ID not found")
             val user = User(
                 uid = id,
-                name = nama,
+                name = name,
                 email = email,
             )
             firestore.collection("users")
@@ -50,8 +50,13 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun logout() {
-        auth.signOut()
+    fun logout(): Result<Boolean> {
+        return try {
+            auth.signOut()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     fun isUserLoggedIn(): Boolean {
