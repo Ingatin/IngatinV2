@@ -12,9 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
-import id.co.ingatin.data.network.firebase.FirebaseService
-import id.co.ingatin.data.repository.AuthRepository
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -30,7 +28,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            BrainyTheme {
+            IngatinTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
