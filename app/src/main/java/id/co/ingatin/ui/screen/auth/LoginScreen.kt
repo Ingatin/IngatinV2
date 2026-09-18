@@ -1,6 +1,5 @@
 package id.co.ingatin.ui.screen.auth
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,9 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,9 +41,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
-import id.co.ingatin.ui.screen.viewModel.AuthViewModel
 import id.co.ingatin.ui.theme.IngatinTheme
-import kotlin.math.log
 
 @Composable
 fun LoginScreen(

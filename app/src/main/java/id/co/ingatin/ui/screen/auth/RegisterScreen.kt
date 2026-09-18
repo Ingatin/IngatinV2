@@ -44,7 +44,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
-import id.co.ingatin.ui.screen.viewModel.AuthViewModel
 import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
@@ -69,7 +68,7 @@ fun RegisterScreen(
         when (val state = registerState) {
             is UiState.Success -> {
                 Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
-                navController.navigate("login") {
+                navController.navigate("home") {
                     popUpTo("register") { inclusive = true }
                 }
             }

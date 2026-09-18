@@ -1,4 +1,4 @@
-package id.co.ingatin.ui.screen.viewModel
+package id.co.ingatin.ui.screen.auth
 
 import android.util.Patterns
 import androidx.lifecycle.ViewModel

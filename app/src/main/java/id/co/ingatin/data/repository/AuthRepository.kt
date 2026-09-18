@@ -2,6 +2,7 @@ package id.co.ingatin.data.repository
 
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import id.co.ingatin.data.model.User
 import kotlinx.coroutines.tasks.await
@@ -13,9 +14,11 @@ class AuthRepository @Inject constructor(
 ) {
 
     suspend fun register(email: String, password: String, name: String): Result<String> {
+        var createdUser: FirebaseUser? = null
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val id = authResult.user?.uid ?: throw Exception("User ID not found")
+            createdUser = authResult.user ?: throw Exception("User ID not found")
+            val id = createdUser.uid
             val user = User(
                 uid = id,
                 name = name,
@@ -28,6 +31,14 @@ class AuthRepository @Inject constructor(
             Log.d(AUTH, "createUserWithEmail:success")
             Result.success("Berhasil membuat akun baru")
         } catch (e: Exception) {
+            if (createdUser != null) {
+                try {
+                    createdUser.delete().await()
+                    Log.d(AUTH, "rollback: akun dihapus karena gagal simpan ke Firestore")
+                } catch (rollbackEx: Exception) {
+                    Log.e(AUTH, "rollback: gagal menghapus akun", rollbackEx)
+                }
+            }
             Log.e(AUTH, "createUserWithEmail:failure", e)
             Result.failure(e)
         }
