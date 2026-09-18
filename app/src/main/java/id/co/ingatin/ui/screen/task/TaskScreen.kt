@@ -1,9 +1,17 @@
 package id.co.ingatin.ui.screen.task
 
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,9 +25,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -45,41 +56,57 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.R
+import id.co.ingatin.data.model.Category
+import id.co.ingatin.data.model.FormTask
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.ButtonCategory
+import id.co.ingatin.ui.components.CustomTextField
+import id.co.ingatin.ui.components.TimePickerDialog
+import id.co.ingatin.ui.components.DatePickerDialog
 import id.co.ingatin.ui.components.headerTask
-import id.co.ingatin.ui.screen.viewModel.TaskViewModel
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
     navController: NavController,
     viewModel: TaskViewModel = hiltViewModel(),
-    taskId: String? = null
+    taskId: String = ""
 ) {
     val context = LocalContext.current
 
     val title by viewModel.title.collectAsState()
     val description by viewModel.description.collectAsState()
+    val date by viewModel.selectDate.collectAsState()
+    val time by viewModel.selectTime.collectAsState()
 
-    val categories = viewModel.categories
 
+    val categoryOptionsState by viewModel.categoryOption.collectAsState()
+    val categories = when (val state = categoryOptionsState) {
+        is UiState.Success -> state.data
+        else -> emptyList()
+    }
     val selectCategory by viewModel.selectCategory.collectAsState()
 
-
     val showDialog = remember { mutableStateOf(false) }
+    val showTimePicker = remember { mutableStateOf(false) }
+    val showDatePicker = remember { mutableStateOf(false) }
+
+    val categoryToDelete = remember { mutableStateOf<Category?>(null) }
+    val showAddCategoryDialog = remember { mutableStateOf(false) }
+    val newCategoryName = remember { mutableStateOf("") }
 
     val createTaskState by viewModel.createTaskState.collectAsState()
+    val taskState by viewModel.taskById.collectAsState()
+    val updateTaskState by viewModel.updateTaskState.collectAsState()
+    val categoryState by viewModel.categoryState.collectAsState()
+    val deleteCategoryState by viewModel.deleteCategory.collectAsState()
 
-    val isLoading = createTaskState is UiState.Loading
-
-//    val date by viewModel.date.observeAsState("")
-//    val time by viewModel.time.observeAsState("")
-//
-//    val dateTime by viewModel.dateTime.observeAsState("")
-//
-//    val taskDetailState by viewModel.taskDetail.collectAsState()
+    val titleError by viewModel.titleError.collectAsState()
+    val categoryError by viewModel.categoryError.collectAsState()
+    val dateError by viewModel.dateError.collectAsState()
+    val timeError by viewModel.timeError.collectAsState()
 
     LaunchedEffect(createTaskState) {
         when (val state = createTaskState) {
@@ -96,62 +123,59 @@ fun TaskScreen(
         }
     }
 
+    LaunchedEffect(updateTaskState) {
+        when (val state = updateTaskState) {
+            is UiState.Success -> {
+                Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
+                navController.popBackStack()
+            }
+            is UiState.Error -> {
+                Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
+            }
+            else -> Unit
 
+        }
+    }
 
-//    LaunchedEffect(taskId) {
-//        taskId?.let {
-//            viewModel.getTaskById(it)
-//        }
-//    }
-//
-//    LaunchedEffect(taskDetailState) {
-//        if (taskId != null) {
-//            when (val state = taskDetailState) {
-//                is UiState.Success -> {
-//                    state.data?.firstOrNull()?.let { task ->
-//                        title = task.title ?: ""
-//                        description = task.desc ?: ""
-//                        selectCategory = task.category ?: ""
-//                        // Format waktu & tanggal jika datanya tersedia
-//                        task.dueDate?.let { dueDate ->
-//                            val parts = dueDate.split(" ")
-//                            if (parts.size == 2) {
-//                                viewModel.setDate(parts[0])
-//                                viewModel.setTime(parts[1])
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                is UiState.Error -> {
-//                    Toast.makeText(context, "Failed to load task", Toast.LENGTH_SHORT).show()
-//                }
-//
-//                else -> Unit
-//            }
-//        }
-//    }
+    LaunchedEffect(taskId) {
+        viewModel.getTaskById(taskId)
+    }
 
-//    val editTask by viewModel.editTask.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.getCategoryOptions()
+    }
 
-//    LaunchedEffect(editTask) {
-//        if (taskId != null) {
-//            when (val state = editTask) {
-//                is UiState.Success -> {
-//                    Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
-//                    navController.popBackStack()
-//                }
-//
-//                is UiState.Error -> {
-//                    Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
-//                }
-//
-//                else -> Unit
-//            }
-//        }
-//    }
-//
-//
+    LaunchedEffect(categoryState) {
+        when (val state = categoryState) {
+            is UiState.Success -> {
+                Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
+                viewModel.getCategoryOptions()
+                showAddCategoryDialog.value = false
+                newCategoryName.value = ""
+            }
+            is UiState.Error -> {
+                Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
+                showAddCategoryDialog.value = false
+                newCategoryName.value = ""
+            }
+            else -> Unit
+        }
+    }
+
+    LaunchedEffect(deleteCategoryState) {
+        when (val state = deleteCategoryState) {
+            is UiState.Success -> {
+                Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
+                viewModel.getCategoryOptions()
+                categoryToDelete.value = null
+            }
+            is UiState.Error -> {
+                Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
+                categoryToDelete.value = null
+            }
+            else -> Unit
+        }
+    }
 
 
     if (showDialog.value) {
@@ -159,7 +183,7 @@ fun TaskScreen(
             onDismissRequest = { showDialog.value = false },
             title = {
                 Text(
-                    text = if (taskId != null) "Confirm Update" else "Confirm Create",
+                    text = if (taskId.isNotEmpty()) "Confirm Update" else "Confirm Create",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -168,7 +192,7 @@ fun TaskScreen(
             },
             text = {
                 Text(
-                    text = if (taskId != null)
+                    text = if (taskId.isNotEmpty())
                         "Are you sure you want to update this task?"
                     else
                         "Are you sure you want to create this task?"
@@ -178,31 +202,33 @@ fun TaskScreen(
                 Button(
                     onClick = {
                         showDialog.value = false
-                        val selectedCategory = selectCategory ?: ""
-//                        val finalDateTime = dateTime ?: ""
+                        if(taskId.isNotEmpty()) {
+                            viewModel.editTaskById(
+                                taskId,
+                                FormTask(
+                                    title = title,
+                                    description = description,
+                                    category = selectCategory,
+                                    date = date,
+                                    time = time
+                                )
+                            )
 
-//                        if (taskId != null) {
-//                            viewModel.editTask(
-//                                taskId = taskId,
-//                                category = selectedCategory,
-//                                dueDate = finalDateTime,
-//                                title = title,
-//                                desc = description,
-//                                context = context
-//                            )
-//                        } else {
-//                            viewModel.createTask(
-//                                category = selectedCategory,
-//                                dueDate = finalDateTime,
-//                                title = title,
-//                                desc = description,
-//                                context = context
-//                            )
-//                        }
+                        } else {
+                            viewModel.createTask(
+                                FormTask(
+                                    title = title,
+                                    description = description,
+                                    category = selectCategory,
+                                    date = date,
+                                    time = time
+                                )
+                            )
+                        }
                     }
                 ) {
                     Text(
-                        text = if (taskId != null) "Update" else "Create",
+                        text = if (taskId.isNotEmpty()) "Update" else "Create",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.tertiary
@@ -226,153 +252,351 @@ fun TaskScreen(
         )
     }
 
-
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-
-        ) {
-        headerTask(
-            titleHeader = if (taskId != null) "Edit Task" else "Create Task",
-            navController = navController
-        )
-        Spacer(modifier = Modifier.height(31.dp))
-        TitleTextField("Title")
-        OutlinedTextField(
-            value = title,
-            onValueChange = {
-                viewModel.title.value = it
+    if(showTimePicker.value){
+        TimePickerDialog(
+            onConfirm = { hour, minute ->
+                viewModel.setTime(hour, minute)
+                showTimePicker.value = false
             },
-            placeholder = {
+            onDismiss = {
+                showTimePicker.value = false
+            }
+        )
+    }
+
+    if (showDatePicker.value){
+        DatePickerDialog(
+            onConfirm = { year, month, day ->
+                viewModel.setDate(year, month, day)
+                showDatePicker.value = false
+            },
+            onDismiss = {
+                showDatePicker.value = false
+            }
+        )
+    }
+
+    categoryToDelete.value?.let { category ->
+        val isDeleting = deleteCategoryState is UiState.Loading
+        AlertDialog(
+            onDismissRequest = {
+                if (!isDeleting) categoryToDelete.value = null
+            },
+            title = {
                 Text(
-                    text = "Title", color = Color.LightGray
+                    text = "Hapus Kategori",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
                 )
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 22.dp, top = 4.dp)
-                .border(
-                    width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
-                ),
-            shape = RoundedCornerShape(14.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
-        TitleTextField("Deadline")
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 22.dp, start = 8.dp, end = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = { Text("Time") },
-                readOnly = true,
-                trailingIcon = {
-                    IconButton(onClick = {
-//                        viewModel.selectTime(context)
-                    }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_clock),
-                            contentDescription = "Select Time",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .weight(0.4F)
-                    .border(
-                        width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
-                    ),
-                shape = RoundedCornerShape(14.dp),
-            )
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = { Text("Date") },
-                readOnly = true,
-                trailingIcon = {
-                    IconButton(onClick = {
-//                        viewModel.selectDate(context)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Select date"
-                        )
-                    }
-                },
-                modifier = Modifier
-                    .weight(0.6F)
-                    .border(
-                        width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
-                    ),
-                shape = RoundedCornerShape(14.dp),
-            )
-
-        }
-
-        TitleTextField("Category")
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 22.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            categories.forEach { category ->
-                ButtonCategory(
-                    btnTitle = category,
-                    onCategoryClick = { selected ->
-                        viewModel.selectCategory.value = selected
+            text = {
+                Text(text = "Hapus kategori '${category.name}'?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (viewModel.selectCategory.value == category.name) {
+                            viewModel.updateCategory("")
+                        }
+                        viewModel.deleteCategoryOptions(category.id)
                     },
-                    isSelected = selectCategory == category
+                    enabled = !isDeleting
+                ) {
+                    if (isDeleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = MaterialTheme.colorScheme.tertiary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Hapus",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { categoryToDelete.value = null },
+                    enabled = !isDeleting
+                ) {
+                    Text(
+                        text = "Batal",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+    if (showAddCategoryDialog.value) {
+        val isCreating = categoryState is UiState.Loading
+        AlertDialog(
+            onDismissRequest = {
+                if (!isCreating) {
+                    showAddCategoryDialog.value = false
+                    newCategoryName.value = ""
+                }
+            },
+            title = {
+                Text(
+                    text = "Tambah Kategori",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                )
+            },
+            text = {
+                OutlinedTextField(
+                    value = newCategoryName.value,
+                    onValueChange = { newCategoryName.value = it },
+                    placeholder = { Text("Nama kategori") },
+                    singleLine = true,
+                    enabled = !isCreating
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val name = newCategoryName.value.trim()
+                        if (name.isNotBlank()) {
+                            viewModel.createCategoryOptions(name)
+                        }
+                    },
+                    enabled = !isCreating && newCategoryName.value.isNotBlank()
+                ) {
+                    if (isCreating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = MaterialTheme.colorScheme.tertiary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Tambah",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showAddCategoryDialog.value = false
+                        newCategoryName.value = ""
+                    },
+                    enabled = !isCreating
+                ) {
+                    Text(
+                        text = "Batal",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+
+
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+
+            ) {
+            headerTask(
+                titleHeader = if (taskId.isEmpty()) "Create Task" else "Edit Task",
+                navController = navController
+            )
+            Spacer(modifier = Modifier.height(31.dp))
+            TitleTextField("Title")
+            CustomTextField(
+                values = title,
+                onValueChange = {
+                    viewModel.updateTitle(it)
+                },
+                placeholder = "Title",
+                icon = Icons.Filled.Edit,
+                contentDescription = "Title Icon",
+                keyboardType = KeyboardType.Text,
+                isError = titleError != null,
+                errorMessage = titleError
+            )
+            TitleTextField("Deadline")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 22.dp, start = 8.dp, end = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = time ,
+                    onValueChange = {},
+                    placeholder = { Text("Time") },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            showTimePicker.value = true
+                        }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_clock),
+                                contentDescription = "Select Time",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(0.4F)
+                        .border(
+                            width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
+                        ),
+                    shape = RoundedCornerShape(14.dp),
+                )
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = {},
+                    placeholder = { Text("Date") },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker.value = true }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = "Select date"
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(0.6F)
+                        .border(
+                            width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
+                        ),
+                    shape = RoundedCornerShape(14.dp),
+                )
+
+            }
+
+            if (timeError != null || dateError != null) {
+                Text(
+                    text = listOfNotNull(timeError, dateError).joinToString("\n"),
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 8.dp, bottom = 16.dp)
+                )
+            }
+
+            TitleTextField("Category")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(top = 8.dp, bottom = 22.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                categories.forEach { category ->
+                    ButtonCategory(
+                        btnTitle = category.name,
+                        onCategoryClick = { selected ->
+                            viewModel.updateCategory(selected)
+                        },
+                        isSelected = selectCategory == category.name,
+                        onLongClick = {
+                            categoryToDelete.value = category
+                        }
+                    )
+                }
+                AddCategoryButton(
+                    onClick = {
+                        showAddCategoryDialog.value = true
+                    }
+                )
+            }
+            if (categoryError != null) {
+                Text(
+                    text = categoryError ?: "",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 8.dp, bottom = 16.dp)
+                )
+            } else {
+                Text(
+                    text = "Tekan lama pada kategori untuk menghapusnya",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 8.dp, bottom = 16.dp)
+                )
+            }
+            TitleTextField("Description")
+            OutlinedTextField(
+                value = description,
+                onValueChange = {
+                    viewModel.updateDescription(it)
+                },
+                placeholder = {
+                    Text(
+                        text = "Enter description", color = Color.LightGray
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(top = 4.dp, bottom = 32.dp)
+                    .border(
+                        width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
+                    ),
+                shape = RoundedCornerShape(14.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                singleLine = false,
+            )
+            Button(
+                onClick = {
+                    if (viewModel.validateForm()) {
+                        showDialog.value = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    text = if (taskId.isNotEmpty()) "Update Task" else "Create Task",
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
-        TitleTextField("Description")
-        OutlinedTextField(
-            value = description,
-            onValueChange = {
-                viewModel.description.value = it
-            },
-            placeholder = {
-                Text(
-                    text = "Enter description", color = Color.LightGray
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(top = 4.dp, bottom = 32.dp)
-                .border(
-                    width = 2.dp, color = Color.LightGray, shape = RoundedCornerShape(14.dp)
-                ),
-            shape = RoundedCornerShape(14.dp),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            singleLine = false,
-        )
-        Button(
-            onClick = {
-                viewModel.createTask(title, selectCategory, description)
-//                showDialog.value = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
-        ) {
-            Text(
-                text = if (taskId != null) "Update Task" else "Create Task",
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold
-            )
+        if (createTaskState is UiState.Loading || taskState is UiState.Loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clickable(enabled = false) {} // supaya tidak bisa diklik
+                    .align(Alignment.Center),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+            }
         }
     }
 }
-
 
 @Composable
 fun TitleTextField(title: String) {
@@ -382,19 +606,41 @@ fun TitleTextField(title: String) {
         ), modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
 
     )
+}
 
+@Composable
+fun AddCategoryButton(
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.height(40.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        ),
+        contentPadding = PaddingValues(horizontal = 12.dp)
+    ) {
+        Text(
+            text = "+",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold
+            ),
+            color = Color.White,
+        )
+    }
 }
 
 
 @Preview(showBackground = true)
 @Composable
 fun TaskScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
             val navController = rememberNavController()
-            TaskScreen(navController)
+//            TaskScreen(navController)
         }
     }
 }

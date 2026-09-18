@@ -37,9 +37,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.headerTask
-import id.co.ingatin.ui.screen.viewModel.TaskViewModel
-import id.co.ingatin.ui.theme.BrainyTheme
-import io.grpc.perfmark.PerfMark.task
+import id.co.ingatin.ui.theme.IngatinTheme
 
 
 @Composable
@@ -49,7 +47,7 @@ fun DetailTaskScreen(
 
     val context = LocalContext.current
 
-    val taskDetail by viewModel.taskDetail.collectAsState()
+    val taskDetail by viewModel.taskById.collectAsState()
     val deleteTask by viewModel.deleteTask.collectAsState()
 
 
@@ -119,7 +117,7 @@ fun DetailTaskScreen(
                         )
                     )
                     Text(
-                        text = "task.dueDate", style = MaterialTheme.typography.bodySmall.copy(
+                        text = "${task.data.date} ${task.data.time}", style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.SemiBold, color = Color.Black
                         ), modifier = Modifier.padding(bottom = 32.dp, top = 8.dp)
                     )
@@ -216,7 +214,7 @@ fun DetailTaskScreen(
 @Preview(showBackground = true)
 @Composable
 fun DetailTaskScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

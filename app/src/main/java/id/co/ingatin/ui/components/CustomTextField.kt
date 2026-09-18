@@ -89,7 +89,7 @@ fun CustomTextField(
                 VisualTransformation.None,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 14.dp)
                 .border(
                     width = 2.dp,
                     color = borderColor,

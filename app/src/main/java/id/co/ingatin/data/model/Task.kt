@@ -8,9 +8,9 @@ import java.util.Date
 data class TaskDto(
     @DocumentId
     val taskId: String = "",
-    val category: String,
-    val dueDate: Timestamp,
-    val title: String,
+    val category: String = "",
+    val dueDate: Timestamp = Timestamp.now(),
+    val title: String = "",
     val description: String = ""
 )
 

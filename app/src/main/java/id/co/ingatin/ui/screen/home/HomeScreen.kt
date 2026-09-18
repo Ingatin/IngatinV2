@@ -50,7 +50,6 @@ import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.CardTaskItem
 import id.co.ingatin.ui.components.FilterTask
 import id.co.ingatin.ui.screen.auth.AuthViewModel
-import id.co.ingatin.ui.screen.viewModel.TaskViewModel
 import id.co.ingatin.ui.theme.IngatinTheme
 
 

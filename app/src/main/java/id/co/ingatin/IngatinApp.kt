@@ -30,19 +30,19 @@ fun IngatinNav(startDestination: String) {
         composable("home") {
             HomeScreen(navController)
         }
-        composable("task") {
-            TaskScreen(navController)
-        }
+//        composable("task") {
+//            TaskScreen(navController)
+//        }
 
         composable(
             route = "task/{taskId}",
-            arguments = listOf(navArgument("taskId") { defaultValue = "" })
+            arguments = listOf(
+                navArgument("taskId") {
+                defaultValue = ""
+            })
         ) {
-            val taskId = it.arguments?.getString("taskId")
-            TaskScreen(
-                navController = navController,
-                taskId = if (taskId.isNullOrEmpty()) null else taskId
-            ) // Edit Task
+            val taskId = it.arguments?.getString("taskId") ?: ""
+            TaskScreen(navController, taskId = taskId)
         }
 
         composable("DetailTask/{taskId}") { backStackEntry ->

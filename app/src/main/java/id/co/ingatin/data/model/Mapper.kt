@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter
 fun TaskDto.toDomain(): Task {
     val zonedDateTime = dueDate.toDate().toInstant().atZone(ZoneId.systemDefault())
 
-    val dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
+    val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     return Task(
@@ -31,4 +31,12 @@ fun List<TaskDto>.toCategoryCount(): CategoryCount {
         .take(2)
         .map { CategorySummary(name = it.key, count = it.value) }
     return CategoryCount(allTask = this.size, categories = categories)
+}
+
+
+fun CategoryDto.toCategory(): Category{
+    return Category(
+        id = categoryId,
+        name = name
+    )
 }
