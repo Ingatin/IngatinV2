@@ -100,7 +100,7 @@ class AuthViewModel @Inject constructor(
         if (email.isBlank()) {
             emailError.value = "Email tidak boleh kosong"
             isValid = false
-        } else if (email.isNotEmpty() && Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             emailError.value = "Format email tidak valid"
             isValid = false
         }

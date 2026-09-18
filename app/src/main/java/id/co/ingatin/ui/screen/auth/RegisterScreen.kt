@@ -89,7 +89,7 @@ fun RegisterScreen(
         ) {
             IconButton(
                 onClick = {
-                    navController.popBackStack()
+                    navController.navigate("login")
                 },
                 modifier = Modifier
                     .clip(RoundedCornerShape(18.dp))
