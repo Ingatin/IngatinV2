@@ -1,8 +1,11 @@
 package id.co.ingatin.ui.screen.home
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -39,183 +42,183 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.CardTaskItem
 import id.co.ingatin.ui.components.FilterTask
 import id.co.ingatin.ui.screen.auth.AuthViewModel
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
-    navController: NavController
+    navController: NavController,
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context) }
-    val viewModel: HomeViewModel = viewModel(factory = factory)
 
-    var selectedOption by remember { mutableStateOf("All Task") }
-
+    val taskState by homeViewModel.taskState.collectAsState()
+    val countTask by homeViewModel.countCategories.collectAsState()
 
 
-    val taskList by if (selectedOption == "All Task") {
-        viewModel.taskAll.collectAsState()
-    }else{
-        viewModel.taskCategory.collectAsState()
+    var selectedOption by remember { mutableStateOf("All") }
+
+    val categoryData = when (val state = countTask) {
+        is UiState.Success -> state.data
+        else -> null
     }
-    Log.d("selectedOption", selectedOption)
 
+    val totalTask = categoryData?.allTask ?: 0
+    val topCategories = categoryData?.categories.orEmpty()
 
-    LaunchedEffect(selectedOption) {
-        if (selectedOption == "All Task") {
-            viewModel.getAllTasks()
-        } else {
-            viewModel.getTasksByCategory(selectedOption)
-        }
+    val filterCategories = when (val state = taskState) {
+        is UiState.Success -> state.data.map { it.category }.distinct()
+        else -> emptyList()
     }
 
     LaunchedEffect(Unit) {
-        viewModel.getAllTasks()
+        homeViewModel.refreshHome()
     }
 
-    val taskAllState by viewModel.taskAll.collectAsState()
-
-    val allCount = (taskAllState as? UiState.Success)?.data?.size ?: 0
-    val workCount = (taskAllState as? UiState.Success)?.data?.count { it.category == "Work" } ?: 0
-    val academyCount = (taskAllState as? UiState.Success)?.data?.count { it.category == "Academy" } ?: 0
-
-
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    navController.navigate("task")
-                },
-                containerColor = MaterialTheme.colorScheme.tertiary,
-                contentColor = Color.Black
-            ) {
-                Icon(Icons.Filled.Add, "Tambah Tugas Baru")
-            }
-        }
-    ) { innerPadding ->
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-        ) {
-            HeaderHome(navController)
-            Spacer(modifier = Modifier.height(20.dp))
-            CardTaskItem(
-                title = "My Task",
-                count = allCount,
-                modifier = Modifier
-                    .clickable {
-                        navController.navigate("MyTask/All Task")
-                    }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CardTaskItem(
-                    title = "Work",
-                    count = workCount,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            navController.navigate("MyTask/Work")
-                        }
-                )
-                CardTaskItem(
-                    title = "Academy",
-                    count = academyCount,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable {
-                            navController.navigate("MyTask/Academy")
-                        }
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = "Tasks",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
-                FilterTask(
-                    selectedOption = selectedOption,
-                    onOptionSelected = { selectedOption = it }
-                )
-            }
-
-            when (taskList) {
-                is UiState.Success -> {
-                    val tasks = (taskList as UiState.Success).data.orEmpty()
-                    tasks.forEach { task ->
-                        CardMyTask(
-                            tasks = task,
-                            modifier = Modifier
-                                .padding(bottom = 8.dp),
-                            onClick = {
-                                navController.navigate("DetailTask/${task.taskId}")
-                            }
-                        )
-                    }
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Scaffold(
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate("task/")
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = Color.Black
+                ) {
+                    Icon(Icons.Filled.Add, "Tambah Tugas Baru")
                 }
-                is UiState.Loading -> {
-                    Column(
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+            ) {
+                HeaderHome(navController)
+                Spacer(modifier = Modifier.height(20.dp))
+
+
+                CardTaskItem(
+                    title = "My Task",
+                    count = totalTask,
+                    modifier = Modifier
+                        .clickable {
+                            navController.navigate("MyTask/All Task")
+                        }
+                )
+                if (topCategories.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        topCategories.forEach { c ->
+                            CardTaskItem(
+                                title = c.name,
+                                count = c.count,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        navController.navigate("MyTask/${c.name}")
+                                    }
+                            )
+                        }
                     }
                 }
+                when (val task = taskState) {
+                    is UiState.Success -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "List Task",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            )
+                            FilterTask(
+                                selectedOption = selectedOption,
+                                onOptionSelected = { selectedOption = it },
+                                categories = filterCategories
+                            )
+                        }
+                        val filteredTasks = if (selectedOption == "All") {
+                            task.data
+                        } else {
+                            task.data.filter { it.category == selectedOption }
+                        }
+                        if (filteredTasks.isEmpty()) {
+                            Text(text = "No tasks available")
+                        } else {
+                            filteredTasks.forEach { task ->
+                                CardMyTask(
+                                    tasks = task,
+                                    modifier = Modifier
+                                        .padding(bottom = 8.dp),
+                                    onClick = {
+                                        navController.navigate("DetailTask/${task.id}")
+                                    }
+                                )
+                            }
+                        }
+                    }
 
-                is UiState.Error -> {
-                    Text(text = (taskList as UiState.Error).errorMessage)
-                }
+                    is UiState.Error -> {
+                        Text(text = (task.errorMessage))
+                    }
 
-                else -> {
-                    Text("Belum ada data")
+                    is UiState.Empty -> {
+                        Text(text = "No tasks available")
+                    }
+
+                    is UiState.Loading -> {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+                    }
                 }
             }
-
-
         }
     }
 }
 
 @Composable
-fun HeaderHome(navController: NavController) {
-    val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context) }
-    val viewModel: AuthViewModel = viewModel(factory = factory)
+fun HeaderHome(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val userState by authViewModel.getUser.collectAsState()
+    val logoutState by authViewModel.logoutState.collectAsState()
 
-    val username by viewModel.username.collectAsState()
-    val logoutState by viewModel.logoutState.collectAsState()
+    LaunchedEffect(Unit) {
+        authViewModel.getUser()
+    }
+
+    LaunchedEffect(logoutState) {
+        if (logoutState is UiState.Success) {
+            navController.navigate("login") {
+                popUpTo("home") { inclusive = true }
+            }
+        }
+    }
 
     val showDialog = remember { mutableStateOf(false) }
 
@@ -236,7 +239,7 @@ fun HeaderHome(navController: NavController) {
                 Button(
                     onClick = {
                         showDialog.value = false
-                        viewModel.logout()
+                        authViewModel.logout()
                     }
                 ) {
                     Text(
@@ -263,40 +266,36 @@ fun HeaderHome(navController: NavController) {
             }
         )
     }
-
-    LaunchedEffect(Unit) {
-        viewModel.getUser()
-    }
-
-    LaunchedEffect(logoutState) {
-        if (logoutState) {
-            navController.navigate("login") {
-                popUpTo("home") { inclusive = true }
-            }
-        }
-    }
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "Hi $username",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 36.sp,
+        when (val state = userState) {
+            is UiState.Success -> {
+                val user = state.data.name
+                Log.d("HOME SCREEN", "username: $user")
 
-                ),
-            modifier = Modifier.weight(1f)
-        )
+                Text(
+                    text = "Hi $user",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 36.sp,
+
+                        ),
+                    modifier = Modifier.weight(1f)
+                )
+
+            }
+
+            else -> Unit
+        }
         Icon(
             imageVector = Icons.Default.ExitToApp,
             contentDescription = "Logout Icon",
             modifier = Modifier
                 .size(32.dp)
                 .clickable {
-//                    ShowSimpleNotification(context)
                     showDialog.value = true
                 }
         )
@@ -304,10 +303,11 @@ fun HeaderHome(navController: NavController) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

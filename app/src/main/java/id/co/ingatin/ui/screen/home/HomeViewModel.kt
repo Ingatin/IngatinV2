@@ -1,58 +1,47 @@
 package id.co.ingatin.ui.screen.home
 
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import id.co.ingatin.data.network.response.TasksItem
+import dagger.hilt.android.lifecycle.HiltViewModel
+import id.co.ingatin.data.model.CategoryCount
+import id.co.ingatin.data.model.Task
+import id.co.ingatin.data.model.toCategoryCount
+import id.co.ingatin.data.model.toDomain
 import id.co.ingatin.data.repository.TaskRepository
 import id.co.ingatin.ui.common.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HomeViewModel(private val repository: TaskRepository) : ViewModel() {
+@RequiresApi(Build.VERSION_CODES.O)
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val taskRepository: TaskRepository
+) : ViewModel() {
 
-    private val _taskAll = MutableStateFlow<UiState<List<TasksItem>?>>(UiState.Loading)
-    val taskAll: StateFlow<UiState<List<TasksItem>?>> = _taskAll
+    private val _taskState = MutableStateFlow<UiState<List<Task>>>(UiState.Empty)
+    val taskState = _taskState.asStateFlow()
 
-    private val _taskCategory = MutableStateFlow<UiState<List<TasksItem>?>>(UiState.Loading)
-    val taskCategory: StateFlow<UiState<List<TasksItem>?>> = _taskCategory
+    private val _countCategories = MutableStateFlow<UiState<CategoryCount>>(UiState.Empty)
+    val countCategories = _countCategories.asStateFlow()
 
-
-
-
-
-    fun getAllTasks() {
+    fun refreshHome() {
+        _taskState.value = UiState.Loading
+        _countCategories.value = UiState.Loading
         viewModelScope.launch {
-            _taskAll.value = UiState.Loading
-            val response = repository.getAllTasks()
-            response.onSuccess {
-                _taskAll.value = UiState.Success(it ?: emptyList())
-            }.onFailure {
-                _taskAll.value = UiState.Error(it.message ?: "Unknown Error")
+            val response = taskRepository.getAllTasks()
+            response.onSuccess { tasks ->
+                _taskState.value = UiState.Success(tasks.map { it.toDomain() })
+                _countCategories.value = UiState.Success(tasks.toCategoryCount())
+            }.onFailure { error ->
+                val message = error.message ?: "Unknown Error"
+                _taskState.value = UiState.Error(message)
+                _countCategories.value = UiState.Error(message)
             }
         }
     }
-
-    fun getTasksByCategory(category: String) {
-        viewModelScope.launch {
-            _taskCategory.value = UiState.Loading
-            val result = when(category) {
-                "Academy" -> repository.getTaskByCategory(category)
-                "Work" -> repository.getTaskByCategory(category)
-                else -> repository.getAllTasks()
-            }
-            result.onSuccess {
-                _taskCategory.value = UiState.Success(it ?: emptyList())
-                Log.d("HomeViewModel", "getTasksByCategory success: $category")
-            }.onFailure {
-                _taskCategory.value = UiState.Error(it.message ?: "Unknown Error")
-                Log.d("HomeViewModel", "getTasksByCategory error: $category")
-            }
-        }
-    }
-
-
-
 
 }

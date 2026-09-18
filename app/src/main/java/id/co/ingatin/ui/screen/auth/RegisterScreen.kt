@@ -1,6 +1,5 @@
 package id.co.ingatin.ui.screen.auth
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -29,9 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,61 +39,46 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
-fun RegisterScreen(navController: NavController) {
-
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context) }
-    val viewModel: AuthViewModel = viewModel(factory = factory)
 
-    val registerState by viewModel.registerState.collectAsState()
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val username by viewModel.name.collectAsState()
+    val nameError by viewModel.nameError.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
+    val registerState by viewModel.registState.collectAsState()
 
-    var isLoading by remember { mutableStateOf(false) }
+    val isLoading = registerState is UiState.Loading
 
     LaunchedEffect(registerState) {
         when (val state = registerState) {
-            is UiState.Empty -> {
-                isLoading = false
-            }
-
-            is UiState.Loading -> {
-                isLoading = true
-                Log.d("Register", "Loading...")
-            }
-
             is UiState.Success -> {
-                isLoading = false
-
-                val data = state.data
-                Log.d("Register", "Registrasi berhasil: $data")
-                Toast.makeText(context, "Registrasi berhasil", Toast.LENGTH_SHORT).show()
-
-                navController.navigate("login")
-
+                Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
+                navController.navigate("home") {
+                    popUpTo("register") { inclusive = true }
+                }
             }
-
             is UiState.Error -> {
-                isLoading = false
-                val errorMessage = state.errorMessage
-
-                Log.e("Register", "Registrasi gagal: $errorMessage")
-                Toast.makeText(context, "Gagal daftar: $errorMessage", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Gagal daftar: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
             }
+
+            else -> Unit
         }
     }
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -108,7 +89,7 @@ fun RegisterScreen(navController: NavController) {
         ) {
             IconButton(
                 onClick = {
-                    navController.popBackStack()
+                    navController.navigate("login")
                 },
                 modifier = Modifier
                     .clip(RoundedCornerShape(18.dp))
@@ -139,38 +120,44 @@ fun RegisterScreen(navController: NavController) {
             CustomTextField(
                 values = username,
                 onValueChange = {
-                    username = it
+                    viewModel.updateName(it)
                 },
                 placeholder = "Username",
                 icon = Icons.Default.AccountCircle,
                 contentDescription = "username Icon",
                 keyboardType = KeyboardType.Text,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = nameError != null,
+                errorMessage = nameError
             )
             Spacer(modifier = Modifier.height(24.dp))
             CustomTextField(
                 values = email,
                 onValueChange = {
-                    email = it
+                    viewModel.updateEmail(it)
                 },
                 placeholder = "Email",
                 icon = Icons.Default.Email,
                 contentDescription = "Email Icon",
                 keyboardType = KeyboardType.Email,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = emailError != null,
+                errorMessage = emailError
             )
             Spacer(modifier = Modifier.height(24.dp))
             CustomTextField(
                 values = password,
                 onValueChange = {
-                    password = it
+                    viewModel.updatePassword(it)
                 },
                 placeholder = "Password",
                 icon = Icons.Default.Lock,
                 contentDescription = "Password Icon",
                 keyboardType = KeyboardType.Password,
                 isPasswordField = true,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = passwordError != null,
+                errorMessage = passwordError
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
@@ -213,7 +200,7 @@ fun RegisterScreen(navController: NavController) {
 @Preview(showBackground = true)
 @Composable
 fun RegisterScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

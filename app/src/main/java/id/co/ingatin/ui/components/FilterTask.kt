@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun FilterTask(
     selectedOption: String,
-    onOptionSelected: (String) -> Unit){
+    onOptionSelected: (String) -> Unit,
+    categories: List<String> = emptyList()
+) {
     var expanded by remember { mutableStateOf(false) }
 
     Row(
@@ -34,11 +36,7 @@ fun FilterTask(
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontSize = 14.sp,
             ),
-            textDecoration = TextDecoration.Underline,
-            modifier = Modifier
-                .clickable {
-                    expanded = true
-                }
+            textDecoration = TextDecoration.Underline
         )
         Icon(
             imageVector = Icons.Default.KeyboardArrowDown,
@@ -50,7 +48,7 @@ fun FilterTask(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            listOf("All Task", "Academy", "Work").forEach{ option ->
+            (listOf("All") + categories.distinct()).forEach { option ->
                 DropdownMenuItem(
                     text = { Text(option) },
                     onClick = {

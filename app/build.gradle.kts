@@ -4,7 +4,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.googleGmsGoogleServices)
+    alias(libs.plugins.googleDevtoolsKsp)
+    alias(libs.plugins.dagger.hilt.android)
 }
 
 android {
@@ -62,28 +64,24 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+//  dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.57.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.57.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
+
 //  Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
+//    Coroutiness
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
 //    SplashScreen
     implementation(libs.androidx.core.splashscreen)
 
 //    Navigation
     implementation(libs.androidx.navigation.compose)
-
-//    Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-    implementation(libs.logging.interceptor)
-
-//    Datastore
-    implementation(libs.androidx.datastore.preferences)
-
-//    Livedata
-    implementation(libs.androidx.runtime.livedata)
 
 //    Worker
     implementation ("androidx.work:work-runtime-ktx:2.9.0")

@@ -1,73 +1,96 @@
 package id.co.ingatin.data.repository
 
-import id.co.ingatin.data.model.LoginReq
-import id.co.ingatin.data.model.RegisterReq
-import id.co.ingatin.data.network.response.LoginResponse
-import id.co.ingatin.data.network.response.RegistResponse
-import id.co.ingatin.data.network.response.UserResponse
-import id.co.ingatin.data.network.retrofit.ApiConfig
-import id.co.ingatin.data.network.retrofit.ApiService
-import id.co.ingatin.data.utils.UserPreferences
-import id.co.ingatin.data.utils.parseErrorMessage
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
+import id.co.ingatin.data.model.User
+import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class AuthRepository(private val apiService: ApiService, private val userPreferences: UserPreferences){
+class AuthRepository @Inject constructor(
+    private val auth: FirebaseAuth,
+    private val firestore: FirebaseFirestore
+) {
 
-    suspend fun register(
-        username: String,
-        email: String,
-        password: String
-    ): Result<RegistResponse>{
+    suspend fun register(email: String, password: String, name: String): Result<String> {
+        var createdUser: FirebaseUser? = null
         return try {
-            val request = RegisterReq(username,email,password)
-            val response = apiService.register(request)
-            Result.success(response)
-        }catch (e: Exception){
-            val message = parseErrorMessage(e)
-            Result.failure(Exception(message))
-        }
-    }
-
-    suspend fun login(
-        email: String,
-        password: String
-    ): Result<LoginResponse>{
-        return try {
-            val request = LoginReq(email,password)
-            val response = apiService.login(request)
-            userPreferences.saveSession(response.token, response.userId)
-            Result.success(response)
-        }catch (e: Exception){
-            val message = parseErrorMessage(e)
-            Result.failure(Exception(message))
-        }
-    }
-
-    suspend fun getUser(): Result<UserResponse>{
-        return try {
-            val token = userPreferences.getToken().first()
-            val userId = userPreferences.getUserId().first()
-
-            if (token.isNullOrEmpty() || userId.isNullOrEmpty()) {
-                return Result.failure(Exception("Token atau UserId kosong"))
+            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+            createdUser = authResult.user ?: throw Exception("User ID not found")
+            val id = createdUser.uid
+            val user = User(
+                uid = id,
+                name = name,
+                email = email,
+            )
+            firestore.collection("users")
+                .document(id)
+                .set(user)
+                .await()
+            Log.d(AUTH, "createUserWithEmail:success")
+            Result.success("Berhasil membuat akun baru")
+        } catch (e: Exception) {
+            if (createdUser != null) {
+                try {
+                    createdUser.delete().await()
+                    Log.d(AUTH, "rollback: akun dihapus karena gagal simpan ke Firestore")
+                } catch (rollbackEx: Exception) {
+                    Log.e(AUTH, "rollback: gagal menghapus akun", rollbackEx)
+                }
             }
-
-            val response = apiService.getUser(ApiConfig.getAuthHeader(token), userId)
-            Result.success(response)
-        }catch (e: Exception){
-            val message = parseErrorMessage(e)
-            Result.failure(Exception(message))
+            Log.e(AUTH, "createUserWithEmail:failure", e)
+            Result.failure(e)
         }
     }
 
-    suspend fun logout(){
-        userPreferences.deleteSession()
+    suspend fun login(email: String, password: String): Result<User> {
+        return try {
+            val authResult = auth.signInWithEmailAndPassword(email, password).await()
+            val userId = authResult.user?.uid ?: throw Exception("User ID not found")
+            val user = firestore.collection("users")
+                .document(userId)
+                .get()
+                .await()
+                .toObject(User::class.java) ?: throw Exception("User not found")
+            Log.d(AUTH, "loginUserWithEmail:success")
+            Result.success(user)
+        } catch (e: Exception) {
+            Log.e(AUTH, "loginUserWithEmail:failure", e)
+            Result.failure(e)
+        }
     }
 
-    fun getToken(): Flow<String?> {
-        return userPreferences.getToken()
+    fun logout(): Result<Boolean> {
+        return try {
+            auth.signOut()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
+    fun isUserLoggedIn(): Boolean {
+        return auth.currentUser != null
+    }
 
+    suspend fun getCurrentUser(): Result<User> {
+        return try {
+            val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
+            val user = firestore.collection("users")
+                .document(uid)
+                .get()
+                .await()
+                .toObject(User::class.java) ?: throw Exception("User not found")
+            Log.d(AUTH, "User: $user")
+            Result.success(user)
+        } catch (e: Exception) {
+            Log.e(AUTH, "getCurrentUser:failure", e)
+            Result.failure(e)
+        }
+    }
+
+    companion object {
+        private const val AUTH = "AuthRepository"
+    }
 }

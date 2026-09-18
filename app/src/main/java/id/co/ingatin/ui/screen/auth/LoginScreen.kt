@@ -1,6 +1,5 @@
 package id.co.ingatin.ui.screen.auth
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,9 +26,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,62 +36,47 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.ViewModelFactory
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
 fun LoginScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
-    val factory = remember { ViewModelFactory(context)}
-    val viewModel: AuthViewModel = viewModel(factory = factory)
+
 
     val loginState by viewModel.loginState.collectAsState()
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
 
-    var isLoading by remember { mutableStateOf(false) }
+    val isLoading = loginState is UiState.Loading
 
     LaunchedEffect(loginState) {
         when (val state = loginState) {
-            is UiState.Empty -> {
-                isLoading = false
-            }
-
-            is UiState.Loading -> {
-                isLoading = true
-                Log.d("LoginScreen", "Loading...")
-            }
-
             is UiState.Success -> {
-                isLoading = false
-
                 val data = state.data
-                Log.d("LoginScreen", "Login berhasil: $data")
-                Toast.makeText(context, "Login berhasil", Toast.LENGTH_SHORT).show()
-
+                Toast.makeText(context, data, Toast.LENGTH_SHORT).show()
                 navController.navigate("home")
-
             }
 
             is UiState.Error -> {
-                isLoading = false
                 val errorMessage = state.errorMessage
-
-                Log.e("LoginScreen", "Login gagal: $errorMessage")
                 Toast.makeText(context, "Gagal Login: $errorMessage", Toast.LENGTH_SHORT).show()
             }
+
+            else -> Unit
         }
     }
-
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -121,31 +102,35 @@ fun LoginScreen(
             CustomTextField(
                 values = email,
                 onValueChange = {
-                    email = it
+                    viewModel.updateEmail(it)
                 },
                 placeholder = "Email",
                 icon = Icons.Default.Email,
                 contentDescription = "Email Icon",
                 keyboardType = KeyboardType.Email,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = emailError != null,
+                errorMessage = emailError
             )
             Spacer(modifier = Modifier.height(24.dp))
             CustomTextField(
                 values = password,
                 onValueChange = {
-                    password = it
+                    viewModel.updatePassword(it)
                 },
                 placeholder = "Password",
                 icon = Icons.Default.Lock,
                 contentDescription = "Password Icon",
                 keyboardType = KeyboardType.Password,
                 isPasswordField = true,
-                enabled = !isLoading
+                enabled = !isLoading,
+                isError = passwordError != null,
+                errorMessage = passwordError
             )
             Spacer(modifier = Modifier.height(32.dp))
             Button(
                 onClick = {
-                    viewModel.login(email,password)
+                    viewModel.login(email, password)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -171,7 +156,8 @@ fun LoginScreen(
                         fontWeight = FontWeight.SemiBold,
                     )
                 )
-                Text(text = "Here",
+                Text(
+                    text = "Here",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                     ),
@@ -193,15 +179,12 @@ fun LoginScreen(
         }
 
     }
-
-
 }
-
 
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

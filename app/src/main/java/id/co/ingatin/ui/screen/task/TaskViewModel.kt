@@ -1,157 +1,246 @@
 package id.co.ingatin.ui.screen.task
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
-import android.content.Context
+import android.os.Build
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import id.co.ingatin.data.network.response.DeleteResponse
-import id.co.ingatin.data.network.response.TasksItem
+import dagger.hilt.android.lifecycle.HiltViewModel
+import id.co.ingatin.data.model.Category
+import id.co.ingatin.data.model.FormTask
+import id.co.ingatin.data.model.Task
+import id.co.ingatin.data.model.toCategory
+import id.co.ingatin.data.model.toDomain
 import id.co.ingatin.data.repository.TaskRepository
 import id.co.ingatin.ui.common.UiState
-import id.co.ingatin.ui.screen.notif.scheduleReminder
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import javax.inject.Inject
 
-class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
+@RequiresApi(Build.VERSION_CODES.O)
+@HiltViewModel
+class TaskViewModel @Inject constructor(
+    private val taskRepository: TaskRepository
+) : ViewModel() {
 
-    private val _createTask = MutableStateFlow<UiState<TasksItem>>(UiState.Loading)
-    val createTask: MutableStateFlow<UiState<TasksItem>> = _createTask
 
-    private val _editTask = MutableStateFlow<UiState<TasksItem>>(UiState.Loading)
-    val editTask: MutableStateFlow<UiState<TasksItem>> = _editTask
+    private val _createTaskState = MutableStateFlow<UiState<String>>(UiState.Empty)
+    val createTaskState = _createTaskState.asStateFlow()
 
-    private val _taskDetail = MutableStateFlow<UiState<List<TasksItem>?>>(UiState.Loading)
-    val taskDetail: StateFlow<UiState<List<TasksItem>?>> = _taskDetail
+    private val _updateTaskState = MutableStateFlow<UiState<Boolean>>(UiState.Empty)
+    val updateTaskState = _updateTaskState.asStateFlow()
 
-    private val _deleteTask = MutableStateFlow<UiState<DeleteResponse>>(UiState.Loading)
-    val deleteTask: MutableStateFlow<UiState<DeleteResponse>> = _deleteTask
+    private val _deleteTask = MutableStateFlow<UiState<Boolean>>(UiState.Empty)
+    val deleteTask = _deleteTask.asStateFlow()
 
-    private val _date = MutableLiveData("")
-    var date: LiveData<String> = _date
+    private val _taskById = MutableStateFlow<UiState<Task>>(UiState.Empty)
+    val taskById = _taskById.asStateFlow()
 
-    private val _time = MutableLiveData("")
-    var time: LiveData<String> = _time
+    private val _taskState = MutableStateFlow<UiState<List<Task>>>(UiState.Empty)
+    val taskState = _taskState.asStateFlow()
 
-    private val _dateTime = MutableLiveData("")
-    var dateTime: LiveData<String> = _dateTime
+    private val _categoryOption = MutableStateFlow<UiState<List<Category>>>(UiState.Empty)
+    val categoryOption = _categoryOption.asStateFlow()
 
-    fun selectDate(context: Context) {
-        val currentDate = Calendar.getInstance()
-        DatePickerDialog(
-            context, { _, year, month, day ->
-                val formatted = String.format(
-                    "%02d-%02d-%d",
-                    day,
-                    month + 1,
-                    year
-                )
-                _date.value = formatted
-                updateDateTime()
-            },
-            currentDate.get(Calendar.YEAR),
-            currentDate.get(Calendar.MONTH),
-            currentDate.get(Calendar.DAY_OF_MONTH)
-        ).show()
-    }
+    private val _categoryState = MutableStateFlow<UiState<String>>(UiState.Empty)
+    val categoryState = _categoryState.asStateFlow()
 
-    fun selectTime(context: Context) {
-        val calendar = Calendar.getInstance()
-        TimePickerDialog(
-            context,
-            { _, hour, minute ->
-                val formatted = String.format("%02d:%02d", hour, minute)
-                _time.value = formatted
-                updateDateTime()
-            },
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE),
-            true
-        ).show()
-    }
+    private val _deleteCategory = MutableStateFlow<UiState<String>>(UiState.Empty)
+    val deleteCategory = _deleteCategory.asStateFlow()
 
-    private fun updateDateTime() {
-        val currentDate = _date.value ?: ""
-        val currentTime = _time.value ?: ""
 
-        if (currentDate.isNotEmpty() && currentTime.isNotEmpty()) {
-            _dateTime.value = "$currentDate $currentTime"
+    val title = MutableStateFlow("")
+    val description = MutableStateFlow("")
+    val selectCategory = MutableStateFlow("")
+    val selectDate = MutableStateFlow("")
+    val selectTime = MutableStateFlow("")
+
+    val titleError = MutableStateFlow<String?>(null)
+    val categoryError = MutableStateFlow<String?>(null)
+    val dateError = MutableStateFlow<String?>(null)
+    val timeError = MutableStateFlow<String?>(null)
+
+    private val _selectedCategory = MutableStateFlow("All")
+
+    fun getCategoryNames(): List<String> =
+        when (val state = _categoryOption.value) {
+            is UiState.Success -> state.data.map { it.name }
+            else -> emptyList()
         }
+
+
+    fun setCategory(category: String) {
+        _selectedCategory.value = category
     }
 
-    fun createTask(
-        context: Context,
-        category: String,
-        dueDate: String,
-        title: String,
-        desc: String
-    ) {
-        _createTask.value = UiState.Loading
-        viewModelScope.launch {
-            val response = repository.createTask(category, dueDate, title, desc)
-            response.onSuccess {
-                _createTask.value = UiState.Success(it)
-                scheduleReminder(context, title,desc,dueDate)
-            }.onFailure {
-                _createTask.value = UiState.Error(it.message ?: "Unknown Error")
-            }
+    fun updateTitle(value: String) {
+        title.value = value
+        titleError.value = null
+    }
+
+    fun updateDescription(value: String) {
+        description.value = value
+    }
+
+    fun updateCategory(category: String) {
+        selectCategory.value = category
+        categoryError.value = null
+    }
+
+    fun validateForm(): Boolean {
+        var isValid = true
+
+        if (title.value.isBlank()) {
+            titleError.value = "Title wajib diisi"
+            isValid = false
+        } else if (title.value.length < 3) {
+            titleError.value = "Title minimal 3 karakter"
+            isValid = false
         }
+
+        if (selectCategory.value.isBlank()) {
+            categoryError.value = "Pilih kategori terlebih dahulu"
+            isValid = false
+        }
+
+        if (selectDate.value.isBlank()) {
+            dateError.value = "Pilih tanggal deadline"
+            isValid = false
+        }
+
+        if (selectTime.value.isBlank()) {
+            timeError.value = "Pilih waktu deadline"
+            isValid = false
+        }
+
+        return isValid
     }
 
     fun getTaskById(taskId: String) {
+        if (taskId.isEmpty()) return
+
+        _taskById.value = UiState.Loading
         viewModelScope.launch {
-            val result = repository.getTaskById(taskId)
-            Log.d("resultViemodelHome", "result: $result")
-            result
-                .onSuccess { _taskDetail.value = UiState.Success(it ?: emptyList()) }
-                .onFailure { _taskDetail.value = UiState.Error(it.message ?: "Unknown error") }
-        }
-    }
-
-    fun deleteTask(taskId: String){
-        viewModelScope.launch {
-            val result = repository.deleteTask(taskId)
-            Log.d("resultDeleteviewmodel", "result: $result")
-            result
-                .onSuccess { _deleteTask.value = UiState.Success(it)}
-                .onFailure { _deleteTask.value = UiState.Error(it.message ?: "Unknown error") }
-        }
-    }
-
-    fun setDate(newDate: String) {
-        _date.value = newDate
-        updateDateTime()
-    }
-
-    fun setTime(newTime: String) {
-        _time.value = newTime
-        updateDateTime()
-    }
-
-    fun editTask(
-        context: Context,
-        taskId: String,
-        category: String,
-        dueDate: String,
-        title: String,
-        desc: String
-    ){
-        _editTask.value = UiState.Loading
-        viewModelScope.launch {
-            val response = repository.editTask(taskId, category, dueDate, title, desc)
+            val response = taskRepository.getTaskById(taskId)
             response.onSuccess {
-                _editTask.value = UiState.Success(it)
-                scheduleReminder(context, title,desc, dueDate)
+                val data = it.toDomain()
+                _taskById.value = UiState.Success(data)
+                title.value = data.title
+                description.value = data.description
+                selectCategory.value = data.category
+                selectDate.value = data.date
+                selectTime.value = data.time
             }.onFailure {
-                _editTask.value = UiState.Error(it.message ?: "Unknown Error")
+                _taskById.value = UiState.Error(it.message ?: "Unknow Error")
+            }
+        }
+
+
+    }
+
+    fun createTask(
+        form: FormTask
+    ) {
+        if (!validateForm()) return
+        Log.d("TaskViewModel", "createTask: $form")
+        _createTaskState.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.createTasks(form)
+
+            response.onSuccess {
+                _createTaskState.value =
+                    UiState.Success("Berhasil membuat task ${form.category} baru")
+            }.onFailure {
+                _createTaskState.value = UiState.Error(it.message ?: "Unknow Error")
             }
         }
     }
 
+    fun getAllTasks() {
+        _taskState.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.getAllTasks()
+            response.onSuccess {
+                val domainList = it.map { it.toDomain() }
+                _taskState.value = UiState.Success(domainList)
+            }.onFailure {
+                _taskState.value = UiState.Error(it.message ?: "Unknow Error")
+            }
+        }
+    }
 
+    fun editTaskById(taskId: String, form: FormTask) {
+        if (!validateForm()) return
+        _updateTaskState.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.editTaskById(taskId, form)
+            response.onSuccess {
+                _updateTaskState.value = UiState.Success(it)
+            }.onFailure {
+                _updateTaskState.value = UiState.Error(it.message ?: "Unknown Error")
+            }
+        }
+    }
+
+    fun deleteTaskById(taskId: String) {
+        _deleteTask.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.deleteTaskById(taskId)
+            response.onSuccess {
+                _deleteTask.value = UiState.Success(it)
+            }.onFailure {
+                _deleteTask.value = UiState.Error(it.message ?: "Unknown Error")
+            }
+        }
+    }
+
+    fun getCategoryOptions() {
+        _categoryOption.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.getAllCategories()
+            response.onSuccess {
+                val response = it.map { it.toCategory() }
+                _categoryOption.value = UiState.Success(response)
+            }.onFailure {
+                _categoryOption.value = UiState.Error(it.message ?: "Unknow Error")
+            }
+        }
+    }
+
+    fun createCategoryOptions(name: String) {
+        _categoryState.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.createCategory(name)
+            response.onSuccess {
+                _categoryState.value = UiState.Success("Berhasil menambah kategori baru")
+            }.onFailure {
+                _categoryState.value = UiState.Error(it.message ?: "Unknow Error")
+            }
+        }
+    }
+
+    fun deleteCategoryOptions(id: String) {
+        _deleteCategory.value = UiState.Loading
+        viewModelScope.launch {
+            val response = taskRepository.deleteCategoryById(id)
+            response.onSuccess {
+                _deleteCategory.value = UiState.Success("Berhasil menghapus kategori")
+            }.onFailure {
+                _deleteCategory.value = UiState.Error(it.message ?: "Unknow Error")
+            }
+        }
+    }
+
+    fun setDate(year: Int, month: Int, day: Int) {
+        selectDate.value = "%02d-%02d-%d".format(day, month, year)
+        dateError.value = null
+        Log.d("TaskViewModel", "setDate: ${selectDate.value}")
+    }
+
+    fun setTime(hour: Int, minute: Int) {
+        selectTime.value = "%02d:%02d".format(hour, minute)
+        timeError.value = null
+        Log.d("TaskViewModel", "setTime: ${selectTime.value}")
+    }
 }

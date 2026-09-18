@@ -22,13 +22,16 @@ import androidx.navigation.NavController
 @Composable
 fun headerTask(
     titleHeader: String,
-    navController: NavController) {
+    navController: NavController
+) {
     Box(
         modifier = Modifier.fillMaxWidth(),
     ) {
         IconButton(
             onClick = {
-                navController.popBackStack()
+                navController.navigate("home") {
+                    popUpTo(0)
+                }
             },
             modifier = Modifier
                 .clip(RoundedCornerShape(18.dp))

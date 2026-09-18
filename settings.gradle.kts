@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Brainy"
+rootProject.name = "Ingatin"
 include(":app")
