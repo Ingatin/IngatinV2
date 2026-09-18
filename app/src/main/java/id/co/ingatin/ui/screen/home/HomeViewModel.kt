@@ -28,13 +28,6 @@ class HomeViewModel @Inject constructor(
     private val _countCategories = MutableStateFlow<UiState<CategoryCount>>(UiState.Empty)
     val countCategories = _countCategories.asStateFlow()
 
-
-
-    init {
-        refreshHome()
-    }
-
-
     fun refreshHome() {
         _taskState.value = UiState.Loading
         _countCategories.value = UiState.Loading

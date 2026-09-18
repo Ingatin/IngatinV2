@@ -82,6 +82,10 @@ fun HomeScreen(
         else -> emptyList()
     }
 
+    LaunchedEffect(Unit) {
+        homeViewModel.refreshHome()
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {

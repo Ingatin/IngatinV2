@@ -24,12 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import id.co.ingatin.data.model.MyTask
+import id.co.ingatin.data.model.Task
 
 
 @Composable
 fun CardMyTask(
-    tasks: MyTask,
+    tasks: Task,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,8 +88,7 @@ fun CardMyTask(
             )
 
             Text(
-//                text = getTimeRemainingText(tasks.dueDate),
-                text = "this time",
+                text = tasks.date + " " + tasks.time,
                 modifier = Modifier
                     .width(150.dp)
                     .align(Alignment.End)
@@ -116,10 +115,13 @@ fun CardMyTask(
 @Composable
 fun CardMyTaskPreview() {
     CardMyTask(
-        tasks = MyTask(
-            category = "Academy",
+        tasks = Task(
+            id = "1",
             title = "abc",
-            description = "abc"
+            description = "abc",
+            category = "Academy",
+            date = "18 Sep 2026",
+            time = "10:00"
         ),
         onClick = {}
     )
