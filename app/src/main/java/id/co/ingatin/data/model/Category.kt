@@ -7,3 +7,13 @@ data class CategoryDto(
     val categoryId: String = "",
     val name: String
 )
+
+data class CategorySummary(
+    val name: String,
+    val count: Int
+)
+
+data class CategoryCount(
+    val allTask: Int,
+    val categories: List<CategorySummary>
+)

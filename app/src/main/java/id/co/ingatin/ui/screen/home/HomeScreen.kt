@@ -1,7 +1,8 @@
 package id.co.ingatin.ui.screen.home
 
+import android.os.Build
 import android.util.Log
-import androidx.compose.foundation.background
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,34 +49,37 @@ import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.CardTaskItem
 import id.co.ingatin.ui.components.FilterTask
-import id.co.ingatin.ui.screen.viewModel.AuthViewModel
+import id.co.ingatin.ui.screen.auth.AuthViewModel
 import id.co.ingatin.ui.screen.viewModel.TaskViewModel
-import id.co.ingatin.ui.theme.BrainyTheme
-import kotlin.collections.orEmpty
+import id.co.ingatin.ui.theme.IngatinTheme
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
     navController: NavController,
-    taskViewModel: TaskViewModel = hiltViewModel()
+    homeViewModel: HomeViewModel = hiltViewModel()
 ) {
 
     val context = LocalContext.current
 
-    val taskState by taskViewModel.myTasks.collectAsState()
+    val taskState by homeViewModel.taskState.collectAsState()
+    val countTask by homeViewModel.countCategories.collectAsState()
 
-    val allCount by taskViewModel.allCount.collectAsState()
-    val workCount by taskViewModel.workCount.collectAsState()
-    val academyCount by taskViewModel.academyCount.collectAsState()
 
-    var selectedOption by remember { mutableStateOf("All Task") }
+    var selectedOption by remember { mutableStateOf("All") }
 
-    LaunchedEffect(Unit) {
-        taskViewModel.getTask()
+    val categoryData = when (val state = countTask) {
+        is UiState.Success -> state.data
+        else -> null
     }
 
-    LaunchedEffect(selectedOption) {
-        taskViewModel.getTaskByCategory(selectedOption)
+    val totalTask = categoryData?.allTask ?: 0
+    val topCategories = categoryData?.categories.orEmpty()
+
+    val filterCategories = when (val state = taskState) {
+        is UiState.Success -> state.data.map { it.category }.distinct()
+        else -> emptyList()
     }
 
     Box(
@@ -85,7 +89,7 @@ fun HomeScreen(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
-                        navController.navigate("task")
+                        navController.navigate("task/")
                     },
                     containerColor = MaterialTheme.colorScheme.tertiary,
                     contentColor = Color.Black
@@ -103,96 +107,91 @@ fun HomeScreen(
             ) {
                 HeaderHome(navController)
                 Spacer(modifier = Modifier.height(20.dp))
+
+
                 CardTaskItem(
                     title = "My Task",
-                    count = allCount,
+                    count = totalTask,
                     modifier = Modifier
                         .clickable {
                             navController.navigate("MyTask/All Task")
                         }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    CardTaskItem(
-                        title = "Work",
-                        count = workCount,
+                if (topCategories.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                navController.navigate("MyTask/Work")
-                            }
-                    )
-                    CardTaskItem(
-                        title = "Academy",
-                        count = academyCount,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                navController.navigate("MyTask/Academy")
-                            }
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "Tasks",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                    FilterTask(
-                        selectedOption = selectedOption,
-                        onOptionSelected = { selectedOption = it }
-                    )
-                }
-
-                when (val state = taskState) {
-                    is UiState.Success -> {
-                        val tasks = state.data.orEmpty()
-                        Log.d("HomeScreen", "tasks: $tasks")
-                        if (tasks.isEmpty()) {
-                            Text(text = "No tasks available")
-                        }
-                        tasks.forEach { task ->
-                            CardMyTask(
-                                tasks = task,
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        topCategories.forEach { c ->
+                            CardTaskItem(
+                                title = c.name,
+                                count = c.count,
                                 modifier = Modifier
-                                    .padding(bottom = 8.dp),
-                                onClick = {
-                                    navController.navigate("DetailTask/${task.taskId}")
-                                }
+                                    .weight(1f)
+                                    .clickable {
+                                        navController.navigate("MyTask/${c.name}")
+                                    }
                             )
+                        }
+                    }
+                }
+                when (val task = taskState) {
+                    is UiState.Success -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = "List Task",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.tertiary
+                                )
+                            )
+                            FilterTask(
+                                selectedOption = selectedOption,
+                                onOptionSelected = { selectedOption = it },
+                                categories = filterCategories
+                            )
+                        }
+                        val filteredTasks = if (selectedOption == "All") {
+                            task.data
+                        } else {
+                            task.data.filter { it.category == selectedOption }
+                        }
+                        if (filteredTasks.isEmpty()) {
+                            Text(text = "No tasks available")
+                        } else {
+                            filteredTasks.forEach { task ->
+                                CardMyTask(
+                                    tasks = task,
+                                    modifier = Modifier
+                                        .padding(bottom = 8.dp),
+                                    onClick = {
+                                        navController.navigate("DetailTask/${task.id}")
+                                    }
+                                )
+                            }
                         }
                     }
 
                     is UiState.Error -> {
-                        Text(text = (state.errorMessage))
+                        Text(text = (task.errorMessage))
                     }
 
-                    else -> Unit
+                    is UiState.Empty -> {
+                        Text(text = "No tasks available")
+                    }
+
+                    is UiState.Loading -> {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+                    }
                 }
-            }
-        }
-        if (taskState is UiState.Loading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable(enabled = false) {} // supaya tidak bisa diklik
-                    .align(Alignment.Center),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
             }
         }
     }
@@ -211,7 +210,7 @@ fun HeaderHome(
     }
 
     LaunchedEffect(logoutState) {
-        if (logoutState) {
+        if (logoutState is UiState.Success) {
             navController.navigate("login") {
                 popUpTo("home") { inclusive = true }
             }
@@ -301,10 +300,11 @@ fun HeaderHome(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
