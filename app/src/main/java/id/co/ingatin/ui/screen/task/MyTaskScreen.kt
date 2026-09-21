@@ -36,8 +36,7 @@ import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.HomeTabs
 import id.co.ingatin.ui.components.headerTask
-import id.co.ingatin.ui.screen.viewModel.TaskViewModel
-import id.co.ingatin.ui.theme.BrainyTheme
+import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
 fun MyTaskScreen(
@@ -48,12 +47,12 @@ fun MyTaskScreen(
 
     val context = LocalContext.current
 
-    val taskState by viewModel.myTasks.collectAsState()
+    val taskState by viewModel.taskState.collectAsState()
 
     var selectedCategory by remember { mutableStateOf(category) }
 
     LaunchedEffect(selectedCategory) {
-        viewModel.getTaskByCategory(selectedCategory)
+        viewModel.setCategory(selectedCategory)
     }
 
     Box(
@@ -91,7 +90,7 @@ fun MyTaskScreen(
                             modifier = Modifier
                                 .padding(bottom = 8.dp),
                             onClick = {
-                                navController.navigate("DetailTask/${task.taskId}")
+                                navController.navigate("DetailTask/${task.id}")
                             }
                         )
                     }
@@ -134,7 +133,7 @@ fun MyTaskScreen(
 @Preview(showBackground = true)
 @Composable
 fun MyTaskScreenPreview() {
-    BrainyTheme {
+    IngatinTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

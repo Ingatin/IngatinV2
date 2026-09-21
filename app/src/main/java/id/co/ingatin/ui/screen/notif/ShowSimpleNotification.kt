@@ -35,7 +35,7 @@ fun ShowSimpleNotification(context: Context, title: String, desc: String, messag
 
     // Bangun notifikasi
     val builder = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(R.drawable.iconbrainy)
+        .setSmallIcon(R.drawable.iconingatin)
         .setContentTitle(title)
         .setContentText(message)
         .setStyle(NotificationCompat.BigTextStyle().bigText(desc))
