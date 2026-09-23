@@ -12,16 +12,19 @@ import id.co.ingatin.data.model.Task
 import id.co.ingatin.data.model.toCategory
 import id.co.ingatin.data.model.toDomain
 import id.co.ingatin.data.repository.TaskRepository
+import id.co.ingatin.data.utils.ConnectivityObserver
 import id.co.ingatin.ui.common.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val connectivityObserver: ConnectivityObserver
 ) : ViewModel() {
 
 
@@ -62,6 +65,17 @@ class TaskViewModel @Inject constructor(
     val timeError = MutableStateFlow<String?>(null)
 
     private val _selectedCategory = MutableStateFlow("All")
+
+    init {
+        viewModelScope.launch {
+            connectivityObserver.isOnline.collect { online ->
+                // Muat ulang otomatis saat koneksi pulih setelah sebelumnya gagal.
+                if (online && _taskState.value is UiState.Error) {
+                    getAllTasks()
+                }
+            }
+        }
+    }
 
     fun getCategoryNames(): List<String> =
         when (val state = _categoryOption.value) {
@@ -158,8 +172,14 @@ class TaskViewModel @Inject constructor(
     }
 
     fun getAllTasks() {
-        _taskState.value = UiState.Loading
         viewModelScope.launch {
+            if (!connectivityObserver.isOnline.first()) {
+                _taskState.value = UiState.Error(
+                    "Tidak ada koneksi internet. Periksa kembali koneksi Anda."
+                )
+                return@launch
+            }
+            _taskState.value = UiState.Loading
             val response = taskRepository.getAllTasks()
             response.onSuccess {
                 val domainList = it.map { it.toDomain() }

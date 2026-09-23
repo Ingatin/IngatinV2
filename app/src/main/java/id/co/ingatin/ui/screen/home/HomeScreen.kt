@@ -138,7 +138,7 @@ fun HomeScreen(
                     count = totalTask,
                     modifier = Modifier
                         .clickable {
-                            navController.navigate("MyTask/All Task")
+                            navController.navigate("MyTask/All")
                         }
                 )
                 if (topCategories.isNotEmpty()) {

@@ -1,7 +1,9 @@
 package id.co.ingatin
 
 import android.app.Application
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,6 +17,7 @@ import id.co.ingatin.ui.screen.task.DetailTaskScreen
 import id.co.ingatin.ui.screen.task.MyTaskScreen
 import id.co.ingatin.ui.screen.task.TaskScreen
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun IngatinNav(startDestination: String) {
 
@@ -30,10 +33,6 @@ fun IngatinNav(startDestination: String) {
         composable("home") {
             HomeScreen(navController)
         }
-//        composable("task") {
-//            TaskScreen(navController)
-//        }
-
         composable(
             route = "task/{taskId}",
             arguments = listOf(
@@ -55,8 +54,6 @@ fun IngatinNav(startDestination: String) {
             val category = backStackEntry.arguments?.getString("category") ?: ""
             MyTaskScreen(navController, category = category)
         }
-
-
     }
 
 }

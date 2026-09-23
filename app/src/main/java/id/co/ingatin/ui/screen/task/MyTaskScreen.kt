@@ -1,18 +1,15 @@
 package id.co.ingatin.ui.screen.task
 
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,10 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -34,10 +28,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
+import id.co.ingatin.ui.components.ErrorContent
 import id.co.ingatin.ui.components.HomeTabs
+import id.co.ingatin.ui.components.LoadingContent
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.theme.IngatinTheme
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyTaskScreen(
     navController: NavController,
@@ -45,11 +42,20 @@ fun MyTaskScreen(
     category: String
 ) {
 
-    val context = LocalContext.current
-
     val taskState by viewModel.taskState.collectAsState()
+    val categoryOptionState by viewModel.categoryOption.collectAsState()
 
     var selectedCategory by remember { mutableStateOf(category) }
+
+    val tabCategories = listOf("All") + when (val state = categoryOptionState) {
+        is UiState.Success -> state.data.map { it.name }
+        else -> emptyList()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.getCategoryOptions()
+        viewModel.getAllTasks()
+    }
 
     LaunchedEffect(selectedCategory) {
         viewModel.setCategory(selectedCategory)
@@ -72,19 +78,23 @@ fun MyTaskScreen(
 
             HomeTabs(
                 selectedCategory = selectedCategory,
-                onCategorySelected = { selectedCategory = it }
+                onCategorySelected = { selectedCategory = it },
+                categories = tabCategories
             )
             Spacer(modifier = Modifier.height(16.dp))
 
 
             when (val state = taskState) {
                 is UiState.Success -> {
-                    val tasks = state.data.orEmpty()
-                    Log.d("MyTaskScreen", "tasks: $tasks")
-                    if (tasks.isEmpty()) {
+                    val filteredTasks = if (selectedCategory == "All") {
+                        state.data
+                    } else {
+                        state.data.filter { it.category == selectedCategory }
+                    }
+                    if (filteredTasks.isEmpty()) {
                         Text(text = "No tasks available")
                     }
-                    tasks.forEach { task ->
+                    filteredTasks.forEach { task ->
                         CardMyTask(
                             tasks = task,
                             modifier = Modifier
@@ -96,35 +106,19 @@ fun MyTaskScreen(
                     }
                 }
                 is UiState.Loading -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    LoadingContent()
                 }
 
                 is UiState.Error -> {
-                    Text(text = (state.errorMessage))
+                    ErrorContent(
+                        message = state.errorMessage,
+                        onRetry = { viewModel.getAllTasks() }
+                    )
                 }
 
-                else -> Unit
-            }
-        }
-        if (taskState is UiState.Loading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable(enabled = false) {} // supaya tidak bisa diklik
-                    .align(Alignment.Center),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+                is UiState.Empty -> {
+                    Text(text = "No tasks available")
+                }
             }
         }
     }
