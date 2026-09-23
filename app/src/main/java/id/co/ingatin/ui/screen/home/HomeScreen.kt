@@ -1,7 +1,6 @@
 package id.co.ingatin.ui.screen.home
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,14 +16,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExitToApp
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.CardTaskItem
 import id.co.ingatin.ui.components.ConfirmDialog
+import id.co.ingatin.ui.components.ErrorContent
 import id.co.ingatin.ui.components.FilterTask
-import androidx.compose.material3.CircularProgressIndicator
+import id.co.ingatin.ui.components.LoadingContent
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,19 +56,23 @@ import id.co.ingatin.ui.theme.IngatinTheme
 @Composable
 fun HomeScreen(
     navController: NavController,
-    homeViewModel: HomeViewModel = hiltViewModel()
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
-
-    val context = LocalContext.current
 
     val taskState by homeViewModel.taskState.collectAsState()
     val countTask by homeViewModel.countCategories.collectAsState()
+    val userState by authViewModel.getUser.collectAsState()
+    val logoutState by authViewModel.logoutState.collectAsState()
 
 
     var selectedOption by remember { mutableStateOf("All") }
 
     val categoryData = when (val state = countTask) {
         is UiState.Success -> state.data
+        // Pesan error ditampilkan melalui taskState; kritik dirender 0.
+        is UiState.Error -> null
+        // Loading / Empty: kritik dirender 0 sampai data tersedia.
         else -> null
     }
 
@@ -81,8 +84,23 @@ fun HomeScreen(
         else -> emptyList()
     }
 
+    val greeting = when (val state = userState) {
+        is UiState.Success -> state.data.name.ifBlank { "Pengguna" }
+        is UiState.Loading -> "..."
+        is UiState.Error, is UiState.Empty -> "Pengguna"
+    }
+
     LaunchedEffect(Unit) {
         homeViewModel.refreshHome()
+        authViewModel.getUser()
+    }
+
+    LaunchedEffect(logoutState) {
+        if (logoutState is UiState.Success) {
+            navController.navigate("login") {
+                popUpTo("home") { inclusive = true }
+            }
+        }
     }
 
     Box(
@@ -108,7 +126,10 @@ fun HomeScreen(
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
             ) {
-                HeaderHome(navController)
+                HeaderHome(
+                    greeting = greeting,
+                    onLogout = { authViewModel.logout() }
+                )
                 Spacer(modifier = Modifier.height(20.dp))
 
 
@@ -184,7 +205,10 @@ fun HomeScreen(
                     }
 
                     is UiState.Error -> {
-                        Text(text = (task.errorMessage))
+                        ErrorContent(
+                            message = task.errorMessage,
+                            onRetry = { homeViewModel.refreshHome() }
+                        )
                     }
 
                     is UiState.Empty -> {
@@ -192,34 +216,22 @@ fun HomeScreen(
                     }
 
                     is UiState.Loading -> {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
+                        LoadingContent()
                     }
                 }
             }
+        }
+        if(logoutState is UiState.Loading){
+            LoadingContent()
         }
     }
 }
 
 @Composable
 fun HeaderHome(
-    navController: NavController,
-    authViewModel: AuthViewModel = hiltViewModel()
+    greeting: String,
+    onLogout: () -> Unit
 ) {
-    val userState by authViewModel.getUser.collectAsState()
-    val logoutState by authViewModel.logoutState.collectAsState()
-
-    LaunchedEffect(Unit) {
-        authViewModel.getUser()
-    }
-
-    LaunchedEffect(logoutState) {
-        if (logoutState is UiState.Success) {
-            navController.navigate("login") {
-                popUpTo("home") { inclusive = true }
-            }
-        }
-    }
-
     val showDialog = remember { mutableStateOf(false) }
 
     if (showDialog.value) {
@@ -231,7 +243,7 @@ fun HeaderHome(
             onDismiss = { showDialog.value = false },
             onConfirm = {
                 showDialog.value = false
-                authViewModel.logout()
+                onLogout()
             }
         )
     }
@@ -241,26 +253,15 @@ fun HeaderHome(
             .padding(top = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        when (val state = userState) {
-            is UiState.Success -> {
-                val user = state.data.name
-                Log.d("HOME SCREEN", "username: $user")
-
-                Text(
-                    text = "Hi $user",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 36.sp,
-
-                        ),
-                    modifier = Modifier.weight(1f)
-                )
-
-            }
-
-            else -> Unit
-        }
+        Text(
+            text = "Hi $greeting",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontSize = 36.sp
+            ),
+            modifier = Modifier.weight(1f)
+        )
         Icon(
-            imageVector = Icons.Default.ExitToApp,
+            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
             contentDescription = "Logout Icon",
             modifier = Modifier
                 .size(32.dp)

@@ -2,7 +2,7 @@
 
 ## Perintah build & verifikasi
 - Jalankan hanya `.gradlew.bat` (wrapper Windows; `gradlew` shell tidak jalan di cmd).
-- Verifikasi build/kompilasi: `.\gradlew.bat compileDebugKotlin lint` — jalankan sebelum menyelesaikan kerja.
+- Verifikasi build/kompilasi: `.\gradlew.bat compileDebugKotlin` — jalankan sebelum menyelesaikan kerja.
 - `lint` tersedia dari AGP (tidak ada config lint khusus). Tidak ada tooling typecheck/format terpisah.
 
 ## Arsitektur & wiring
