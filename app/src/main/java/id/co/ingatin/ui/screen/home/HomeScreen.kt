@@ -256,7 +256,7 @@ fun HeaderHome(
         Text(
             text = "Hi $greeting",
             style = MaterialTheme.typography.titleLarge.copy(
-                fontSize = 36.sp
+                    fontSize = 28.sp
             ),
             modifier = Modifier.weight(1f)
         )

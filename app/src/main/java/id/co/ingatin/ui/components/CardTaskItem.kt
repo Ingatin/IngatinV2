@@ -48,7 +48,7 @@ fun CardTaskItem(title: String, count: Int, modifier: Modifier = Modifier){
                 text = count.toString(),
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 40.sp,
+                    fontSize = 30.sp,
                     color = Color.White
                 ),
             )

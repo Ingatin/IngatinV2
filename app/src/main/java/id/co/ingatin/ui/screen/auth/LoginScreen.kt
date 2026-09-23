@@ -89,7 +89,7 @@ fun LoginScreen(
             Text(
                 text = "Sign In",
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 40.sp, fontWeight = FontWeight.ExtraBold
+                    fontSize = 32.sp, fontWeight = FontWeight.ExtraBold
                 ),
             )
             Spacer(modifier = Modifier.height(14.dp))

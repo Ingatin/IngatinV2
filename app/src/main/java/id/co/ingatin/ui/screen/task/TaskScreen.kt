@@ -109,8 +109,9 @@ fun TaskScreen(
     LaunchedEffect(createTaskState) {
         when (val state = createTaskState) {
             is UiState.Success -> {
-                Toast.makeText(context, "Task created!", Toast.LENGTH_SHORT).show()
+                showDialog.value = false
                 navController.popBackStack()
+                Toast.makeText(context, "Task created!", Toast.LENGTH_SHORT).show()
             }
 
             is UiState.Error -> {
@@ -124,8 +125,9 @@ fun TaskScreen(
     LaunchedEffect(updateTaskState) {
         when (val state = updateTaskState) {
             is UiState.Success -> {
-                Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
+                showDialog.value = false
                 navController.popBackStack()
+                Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
             }
             is UiState.Error -> {
                 Toast.makeText(context, "Failed: ${state.errorMessage}", Toast.LENGTH_SHORT).show()
