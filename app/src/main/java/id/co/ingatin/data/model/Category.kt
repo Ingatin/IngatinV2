@@ -14,7 +14,7 @@ data class CategorySummary(
 )
 
 data class CategoryCount(
-    val allTask: Int,
+    val allTask: Int = 0,
     val categories: List<CategorySummary>
 )
 
