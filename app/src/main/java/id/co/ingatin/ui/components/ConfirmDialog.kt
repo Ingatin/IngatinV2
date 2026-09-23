@@ -71,7 +71,7 @@ fun ConfirmDialog(
                     text = dismissText,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.background
                     )
                 )
             }
