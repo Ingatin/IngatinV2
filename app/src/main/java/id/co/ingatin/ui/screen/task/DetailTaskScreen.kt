@@ -1,7 +1,5 @@
 package id.co.ingatin.ui.screen.task
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,11 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import id.co.ingatin.Routes
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.theme.IngatinTheme
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DetailTaskScreen(
     navController: NavController, viewModel: TaskViewModel = hiltViewModel(), taskId: String
@@ -58,7 +56,7 @@ fun DetailTaskScreen(
 
     LaunchedEffect(deleteTask) {
         if (deleteTask is UiState.Success) {
-            navController.navigate("home") {
+            navController.navigate(Routes.HOME) {
                 popUpTo(0)
             }
         }
@@ -129,7 +127,7 @@ fun DetailTaskScreen(
                     ) {
                         Button(
                             onClick = {
-                                navController.navigate("task/$taskId")
+                                navController.navigate("${Routes.TASK}/$taskId")
                             },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
@@ -185,7 +183,6 @@ fun DetailTaskScreen(
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun DetailTaskScreenPreview() {

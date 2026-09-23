@@ -1,7 +1,6 @@
 package id.co.ingatin.ui.screen.home
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,11 +47,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import id.co.ingatin.Routes
 import id.co.ingatin.ui.screen.auth.AuthViewModel
 import id.co.ingatin.ui.theme.IngatinTheme
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -97,8 +96,8 @@ fun HomeScreen(
 
     LaunchedEffect(logoutState) {
         if (logoutState is UiState.Success) {
-            navController.navigate("login") {
-                popUpTo("home") { inclusive = true }
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(Routes.HOME) { inclusive = true }
             }
         }
     }
@@ -110,7 +109,7 @@ fun HomeScreen(
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = {
-                        navController.navigate("task/")
+                        navController.navigate("${Routes.TASK}/")
                     },
                     containerColor = MaterialTheme.colorScheme.tertiary,
                     contentColor = Color.Black
@@ -138,7 +137,7 @@ fun HomeScreen(
                     count = totalTask,
                     modifier = Modifier
                         .clickable {
-                            navController.navigate("MyTask/All")
+                            navController.navigate("${Routes.MY_TASK}/All")
                         }
                 )
                 if (topCategories.isNotEmpty()) {
@@ -155,7 +154,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .clickable {
-                                        navController.navigate("MyTask/${c.name}")
+                                        navController.navigate("${Routes.MY_TASK}/${Uri.encode(c.name)}")
                                     }
                             )
                         }
@@ -197,7 +196,7 @@ fun HomeScreen(
                                     modifier = Modifier
                                         .padding(bottom = 8.dp),
                                     onClick = {
-                                        navController.navigate("DetailTask/${task.id}")
+                                        navController.navigate("${Routes.DETAIL_TASK}/${task.id}")
                                     }
                                 )
                             }
@@ -273,7 +272,6 @@ fun HeaderHome(
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {

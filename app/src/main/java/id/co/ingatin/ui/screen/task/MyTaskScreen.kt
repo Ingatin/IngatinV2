@@ -1,7 +1,5 @@
 package id.co.ingatin.ui.screen.task
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import id.co.ingatin.Routes
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CardMyTask
 import id.co.ingatin.ui.components.ErrorContent
@@ -35,7 +34,6 @@ import id.co.ingatin.ui.components.LoadingContent
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.theme.IngatinTheme
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MyTaskScreen(
     navController: NavController,
@@ -103,7 +101,7 @@ fun MyTaskScreen(
                             modifier = Modifier
                                 .padding(bottom = 8.dp),
                             onClick = {
-                                navController.navigate("DetailTask/${task.id}")
+                                navController.navigate("${Routes.DETAIL_TASK}/${task.id}")
                             }
                         )
                     }

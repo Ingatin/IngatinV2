@@ -1,11 +1,8 @@
 package id.co.ingatin.data.model
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun TaskDto.toDomain(): Task {
     val zonedDateTime = dueDate.toDate().toInstant().atZone(ZoneId.systemDefault())
 

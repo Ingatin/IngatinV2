@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import id.co.ingatin.Routes
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
 import id.co.ingatin.ui.components.LoadingContent
@@ -69,7 +70,9 @@ fun LoginScreen(
             is UiState.Success -> {
                 val data = state.data
                 Toast.makeText(context, data, Toast.LENGTH_SHORT).show()
-                navController.navigate("home")
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.LOGIN) { inclusive = true }
+                }
             }
 
             is UiState.Error -> {
@@ -173,7 +176,7 @@ fun LoginScreen(
                     textDecoration = TextDecoration.Underline,
                     color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.clickable {
-                        navController.navigate("register")
+                        navController.navigate(Routes.REGISTER)
                     })
             }
         }

@@ -1,8 +1,6 @@
 package id.co.ingatin.ui.screen.task
 
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +54,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import id.co.ingatin.R
+import id.co.ingatin.Routes
 import id.co.ingatin.data.model.Category
 import id.co.ingatin.data.model.FormTask
 import id.co.ingatin.ui.common.UiState
@@ -66,7 +65,6 @@ import id.co.ingatin.ui.components.LoadingContent
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.theme.IngatinTheme
 
-@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
@@ -112,7 +110,9 @@ fun TaskScreen(
         when (val state = createTaskState) {
             is UiState.Success -> {
                 showDialog.value = false
-                navController.popBackStack()
+                navController.navigate(Routes.HOME) {
+                    popUpTo(0)
+                }
                 Toast.makeText(context, "Task created!", Toast.LENGTH_SHORT).show()
             }
 
@@ -128,7 +128,9 @@ fun TaskScreen(
         when (val state = updateTaskState) {
             is UiState.Success -> {
                 showDialog.value = false
-                navController.popBackStack()
+                navController.navigate(Routes.HOME) {
+                    popUpTo(0)
+                }
                 Toast.makeText(context, "Task updated!", Toast.LENGTH_SHORT).show()
             }
             is UiState.Error -> {

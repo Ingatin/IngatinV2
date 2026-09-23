@@ -20,7 +20,7 @@ class SplashViewModel @Inject constructor(
     private val  _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _startDestination = MutableStateFlow("login")
+    private val _startDestination = MutableStateFlow(Routes.LOGIN)
     val startDestination = _startDestination.asStateFlow()
 
     init {
@@ -33,10 +33,10 @@ class SplashViewModel @Inject constructor(
     private fun checkUserSession() {
         if (authRepository.isUserLoggedIn()) {
             // 🔹 Kalau user sudah login → langsung ke Home
-            _startDestination.value = "home"
+            _startDestination.value = Routes.HOME
         } else {
             // 🔹 Kalau belum login → ke Login
-            _startDestination.value = "login"
+            _startDestination.value = Routes.LOGIN
         }
         _isLoading.value = false
     }

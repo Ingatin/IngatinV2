@@ -1,9 +1,7 @@
 package id.co.ingatin
 
 import android.app.Application
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,24 +15,35 @@ import id.co.ingatin.ui.screen.task.DetailTaskScreen
 import id.co.ingatin.ui.screen.task.MyTaskScreen
 import id.co.ingatin.ui.screen.task.TaskScreen
 
-@RequiresApi(Build.VERSION_CODES.O)
+object Routes {
+    const val LOGIN = "login"
+    const val REGISTER = "register"
+    const val HOME = "home"
+    const val TASK = "task"
+    const val TASK_FORM = "task/{taskId}"
+    const val DETAIL_TASK = "DetailTask"
+    const val DETAIL_TASK_FORM = "DetailTask/{taskId}"
+    const val MY_TASK = "MyTask"
+    const val MY_TASK_FORM = "MyTask/{category}"
+}
+
 @Composable
 fun IngatinNav(startDestination: String) {
 
     val navController = rememberNavController()
 
     NavHost(navController, startDestination = startDestination) {
-        composable("login") {
+        composable(Routes.LOGIN) {
             LoginScreen(navController)
         }
-        composable("register") {
+        composable(Routes.REGISTER) {
             RegisterScreen(navController)
         }
-        composable("home") {
+        composable(Routes.HOME) {
             HomeScreen(navController)
         }
         composable(
-            route = "task/{taskId}",
+            route = Routes.TASK_FORM,
             arguments = listOf(
                 navArgument("taskId") {
                 defaultValue = ""
@@ -44,14 +53,13 @@ fun IngatinNav(startDestination: String) {
             TaskScreen(navController, taskId = taskId)
         }
 
-        composable("DetailTask/{taskId}") { backStackEntry ->
+        composable(Routes.DETAIL_TASK_FORM) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getString("taskId") ?: ""
-            Log.d("DetailTaskScreen_navhost", "Received taskId: $taskId")
             DetailTaskScreen(navController, taskId = taskId)
         }
 
-        composable("MyTask/{category}") { backStackEntry ->
-            val category = backStackEntry.arguments?.getString("category") ?: ""
+        composable(Routes.MY_TASK_FORM) { backStackEntry ->
+            val category = Uri.decode(backStackEntry.arguments?.getString("category") ?: "")
             MyTaskScreen(navController, category = category)
         }
     }

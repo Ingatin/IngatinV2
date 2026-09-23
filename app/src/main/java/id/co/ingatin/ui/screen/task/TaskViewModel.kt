@@ -1,8 +1,5 @@
 package id.co.ingatin.ui.screen.task
 
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,7 +17,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
@@ -157,7 +153,6 @@ class TaskViewModel @Inject constructor(
         form: FormTask
     ) {
         if (!validateForm()) return
-        Log.d("TaskViewModel", "createTask: $form")
         _createTaskState.value = UiState.Loading
         viewModelScope.launch {
             val response = taskRepository.createTasks(form)
@@ -255,12 +250,10 @@ class TaskViewModel @Inject constructor(
     fun setDate(year: Int, month: Int, day: Int) {
         selectDate.value = "%02d-%02d-%d".format(day, month, year)
         dateError.value = null
-        Log.d("TaskViewModel", "setDate: ${selectDate.value}")
     }
 
     fun setTime(hour: Int, minute: Int) {
         selectTime.value = "%02d:%02d".format(hour, minute)
         timeError.value = null
-        Log.d("TaskViewModel", "setTime: ${selectTime.value}")
     }
 }
