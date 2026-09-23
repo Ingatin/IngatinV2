@@ -26,7 +26,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
+import id.co.ingatin.ui.components.ButtonCategory
+import id.co.ingatin.ui.components.ConfirmDialog
+import id.co.ingatin.ui.components.CustomTextField
+import id.co.ingatin.ui.components.FormDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,8 +62,6 @@ import id.co.ingatin.R
 import id.co.ingatin.data.model.Category
 import id.co.ingatin.data.model.FormTask
 import id.co.ingatin.ui.common.UiState
-import id.co.ingatin.ui.components.ButtonCategory
-import id.co.ingatin.ui.components.CustomTextField
 import id.co.ingatin.ui.components.TimePickerDialog
 import id.co.ingatin.ui.components.DatePickerDialog
 import id.co.ingatin.ui.components.headerTask
@@ -179,72 +180,36 @@ fun TaskScreen(
 
 
     if (showDialog.value) {
-        AlertDialog(
-            onDismissRequest = { showDialog.value = false },
-            title = {
-                Text(
-                    text = if (taskId.isNotEmpty()) "Confirm Update" else "Confirm Create",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
-            },
-            text = {
-                Text(
-                    text = if (taskId.isNotEmpty())
-                        "Are you sure you want to update this task?"
-                    else
-                        "Are you sure you want to create this task?"
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                        if(taskId.isNotEmpty()) {
-                            viewModel.editTaskById(
-                                taskId,
-                                FormTask(
-                                    title = title,
-                                    description = description,
-                                    category = selectCategory,
-                                    date = date,
-                                    time = time
-                                )
-                            )
-
-                        } else {
-                            viewModel.createTask(
-                                FormTask(
-                                    title = title,
-                                    description = description,
-                                    category = selectCategory,
-                                    date = date,
-                                    time = time
-                                )
-                            )
-                        }
-                    }
-                ) {
-                    Text(
-                        text = if (taskId.isNotEmpty()) "Update" else "Create",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.tertiary
+        ConfirmDialog(
+            title = if (taskId.isNotEmpty()) "Confirm Update" else "Confirm Create",
+            message = if (taskId.isNotEmpty())
+                "Are you sure you want to update this task?"
+            else
+                "Are you sure you want to create this task?",
+            confirmText = if (taskId.isNotEmpty()) "Update" else "Create",
+            dismissText = "Cancel",
+            onDismiss = { showDialog.value = false },
+            onConfirm = {
+                showDialog.value = false
+                if (taskId.isNotEmpty()) {
+                    viewModel.editTaskById(
+                        taskId,
+                        FormTask(
+                            title = title,
+                            description = description,
+                            category = selectCategory,
+                            date = date,
+                            time = time
                         )
                     )
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showDialog.value = false }
-                ) {
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimary
+                } else {
+                    viewModel.createTask(
+                        FormTask(
+                            title = title,
+                            description = description,
+                            category = selectCategory,
+                            date = date,
+                            time = time
                         )
                     )
                 }
@@ -278,85 +243,41 @@ fun TaskScreen(
 
     categoryToDelete.value?.let { category ->
         val isDeleting = deleteCategoryState is UiState.Loading
-        AlertDialog(
-            onDismissRequest = {
-                if (!isDeleting) categoryToDelete.value = null
-            },
-            title = {
-                Text(
-                    text = "Hapus Kategori",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
-            },
-            text = {
-                Text(text = "Hapus kategori '${category.name}'?")
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (viewModel.selectCategory.value == category.name) {
-                            viewModel.updateCategory("")
-                        }
-                        viewModel.deleteCategoryOptions(category.id)
-                    },
-                    enabled = !isDeleting
-                ) {
-                    if (isDeleting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = MaterialTheme.colorScheme.tertiary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Hapus",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
-                        )
-                    }
+        ConfirmDialog(
+            title = "Hapus Kategori",
+            message = "Hapus kategori '${category.name}'?",
+            confirmText = "Hapus",
+            dismissText = "Batal",
+            isConfirming = isDeleting,
+            onDismiss = { categoryToDelete.value = null },
+            onConfirm = {
+                if (viewModel.selectCategory.value == category.name) {
+                    viewModel.updateCategory("")
                 }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { categoryToDelete.value = null },
-                    enabled = !isDeleting
-                ) {
-                    Text(
-                        text = "Batal",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
+                viewModel.deleteCategoryOptions(category.id)
             }
         )
     }
 
     if (showAddCategoryDialog.value) {
         val isCreating = categoryState is UiState.Loading
-        AlertDialog(
-            onDismissRequest = {
-                if (!isCreating) {
-                    showAddCategoryDialog.value = false
-                    newCategoryName.value = ""
+        FormDialog(
+            title = "Tambah Kategori",
+            confirmText = "Tambah",
+            dismissText = "Batal",
+            confirmEnabled = newCategoryName.value.isNotBlank(),
+            isSubmitting = isCreating,
+            onDismiss = {
+                showAddCategoryDialog.value = false
+                newCategoryName.value = ""
+            },
+            onConfirm = {
+                val name = newCategoryName.value.trim()
+                if (name.isNotBlank()) {
+                    viewModel.createCategoryOptions(name)
                 }
             },
-            title = {
-                Text(
-                    text = "Tambah Kategori",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
-            },
-            text = {
+            content = {
                 OutlinedTextField(
                     value = newCategoryName.value,
                     onValueChange = { newCategoryName.value = it },
@@ -364,50 +285,6 @@ fun TaskScreen(
                     singleLine = true,
                     enabled = !isCreating
                 )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val name = newCategoryName.value.trim()
-                        if (name.isNotBlank()) {
-                            viewModel.createCategoryOptions(name)
-                        }
-                    },
-                    enabled = !isCreating && newCategoryName.value.isNotBlank()
-                ) {
-                    if (isCreating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = MaterialTheme.colorScheme.tertiary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(
-                            text = "Tambah",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
-                        )
-                    }
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = {
-                        showAddCategoryDialog.value = false
-                        newCategoryName.value = ""
-                    },
-                    enabled = !isCreating
-                ) {
-                    Text(
-                        text = "Batal",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                }
             }
         )
     }

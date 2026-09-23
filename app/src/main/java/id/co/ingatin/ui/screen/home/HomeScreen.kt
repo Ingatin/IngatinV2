@@ -19,7 +19,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material3.Button
+import id.co.ingatin.ui.common.UiState
+import id.co.ingatin.ui.components.CardMyTask
+import id.co.ingatin.ui.components.CardTaskItem
+import id.co.ingatin.ui.components.ConfirmDialog
+import id.co.ingatin.ui.components.FilterTask
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -45,10 +49,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.common.UiState
-import id.co.ingatin.ui.components.CardMyTask
-import id.co.ingatin.ui.components.CardTaskItem
-import id.co.ingatin.ui.components.FilterTask
 import id.co.ingatin.ui.screen.auth.AuthViewModel
 import id.co.ingatin.ui.theme.IngatinTheme
 
@@ -223,46 +223,15 @@ fun HeaderHome(
     val showDialog = remember { mutableStateOf(false) }
 
     if (showDialog.value) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showDialog.value = false },
-            title = {
-                Text(
-                    text = "Logout",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
-            },
-            text = { Text("Are you sure you want to Logout?") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showDialog.value = false
-                        authViewModel.logout()
-                    }
-                ) {
-                    Text(
-                        text = "Logout",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { showDialog.value = false }
-                ) {
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    )
-                }
+        ConfirmDialog(
+            title = "Logout",
+            message = "Are you sure you want to Logout?",
+            confirmText = "Logout",
+            dismissText = "Cancel",
+            onDismiss = { showDialog.value = false },
+            onConfirm = {
+                showDialog.value = false
+                authViewModel.logout()
             }
         )
     }

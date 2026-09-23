@@ -1,5 +1,7 @@
 package id.co.ingatin.ui.screen.task
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import id.co.ingatin.ui.common.UiState
+import id.co.ingatin.ui.components.ConfirmDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,11 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.theme.IngatinTheme
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DetailTaskScreen(
     navController: NavController, viewModel: TaskViewModel = hiltViewModel(), taskId: String
@@ -68,34 +71,17 @@ fun DetailTaskScreen(
 
 
     if (showDialog.value) {
-        AlertDialog(onDismissRequest = { showDialog.value = false }, title = {
-            Text(
-                text = "Confirm Delete", style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.tertiary
-                )
-            )
-        }, text = { Text("Are you sure you want to delete this task?") }, confirmButton = {
-            Button(
-                onClick = {
-                    showDialog.value = false
-                    viewModel.deleteTaskById(taskId)
-                }) {
-                Text(
-                    text = "Delete", style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
+        ConfirmDialog(
+            title = "Confirm Delete",
+            message = "Are you sure you want to delete this task?",
+            confirmText = "Delete",
+            dismissText = "Cancel",
+            onDismiss = { showDialog.value = false },
+            onConfirm = {
+                showDialog.value = false
+                viewModel.deleteTaskById(taskId)
             }
-        }, dismissButton = {
-            Button(
-                onClick = { showDialog.value = false }) {
-                Text(
-                    text = "Cancel", style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.tertiary
-                    )
-                )
-            }
-        })
+        )
     }
     Box(modifier = Modifier.fillMaxSize()) {
         when (val task = taskDetail) {
