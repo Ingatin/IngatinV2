@@ -1,12 +1,9 @@
 package id.co.ingatin.ui.screen.task
 
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +29,6 @@ import id.co.ingatin.ui.components.CustomTextField
 import id.co.ingatin.ui.components.FormDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +42,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +59,8 @@ import id.co.ingatin.data.model.FormTask
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.TimePickerDialog
 import id.co.ingatin.ui.components.DatePickerDialog
+import id.co.ingatin.ui.components.ErrorContent
+import id.co.ingatin.ui.components.LoadingContent
 import id.co.ingatin.ui.components.headerTask
 import id.co.ingatin.ui.theme.IngatinTheme
 
@@ -180,6 +177,7 @@ fun TaskScreen(
 
 
     if (showDialog.value) {
+        val isSubmitting = createTaskState is UiState.Loading || updateTaskState is UiState.Loading
         ConfirmDialog(
             title = if (taskId.isNotEmpty()) "Confirm Update" else "Confirm Create",
             message = if (taskId.isNotEmpty())
@@ -188,9 +186,9 @@ fun TaskScreen(
                 "Are you sure you want to create this task?",
             confirmText = if (taskId.isNotEmpty()) "Update" else "Create",
             dismissText = "Cancel",
+            isConfirming = isSubmitting,
             onDismiss = { showDialog.value = false },
             onConfirm = {
-                showDialog.value = false
                 if (taskId.isNotEmpty()) {
                     viewModel.editTaskById(
                         taskId,
@@ -460,17 +458,14 @@ fun TaskScreen(
                 )
             }
         }
-        if (createTaskState is UiState.Loading || taskState is UiState.Loading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-                    .clickable(enabled = false) {} // supaya tidak bisa diklik
-                    .align(Alignment.Center),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.background)
-            }
+        if (taskState is UiState.Loading) {
+            LoadingContent()
+        }
+        if (taskId.isNotEmpty() && taskState is UiState.Error) {
+            ErrorContent(
+                message = (taskState as UiState.Error).errorMessage,
+                onRetry = { viewModel.getTaskById(taskId) }
+            )
         }
     }
 }

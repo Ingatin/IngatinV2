@@ -16,9 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.ConfirmDialog
+import id.co.ingatin.ui.components.ErrorContent
+import id.co.ingatin.ui.components.LoadingContent
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,10 +29,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -47,8 +46,6 @@ import id.co.ingatin.ui.theme.IngatinTheme
 fun DetailTaskScreen(
     navController: NavController, viewModel: TaskViewModel = hiltViewModel(), taskId: String
 ) {
-
-    val context = LocalContext.current
 
     val taskDetail by viewModel.taskById.collectAsState()
     val deleteTask by viewModel.deleteTask.collectAsState()
@@ -76,6 +73,7 @@ fun DetailTaskScreen(
             message = "Are you sure you want to delete this task?",
             confirmText = "Delete",
             dismissText = "Cancel",
+            isConfirming = deleteTask is UiState.Loading,
             onDismiss = { showDialog.value = false },
             onConfirm = {
                 showDialog.value = false
@@ -162,34 +160,19 @@ fun DetailTaskScreen(
 
                 }
             }
-            is UiState.Loading -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Memuat data tugas...", style = MaterialTheme.typography.bodyMedium)
-                }
+            is UiState.Loading, is UiState.Empty -> {
+                LoadingContent(text = "Memuat data tugas...")
             }
 
-            else -> Unit
+            is UiState.Error -> {
+                ErrorContent(
+                    message = task.errorMessage,
+                    onRetry = { viewModel.getTaskById(taskId) }
+                )
+            }
         }
         if (deleteTask is UiState.Loading) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Menghapus tugas...", style = MaterialTheme.typography.bodyMedium)
-            }
+            LoadingContent(text = "Menghapus tugas...")
         }
 
     }
@@ -197,6 +180,7 @@ fun DetailTaskScreen(
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun DetailTaskScreenPreview() {
