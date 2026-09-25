@@ -10,15 +10,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,8 +41,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import id.co.ingatin.Routes
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
+import id.co.ingatin.ui.components.LoadingContent
 import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
@@ -66,7 +70,9 @@ fun LoginScreen(
             is UiState.Success -> {
                 val data = state.data
                 Toast.makeText(context, data, Toast.LENGTH_SHORT).show()
-                navController.navigate("home")
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.LOGIN) { inclusive = true }
+                }
             }
 
             is UiState.Error -> {
@@ -78,11 +84,17 @@ fun LoginScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -90,7 +102,7 @@ fun LoginScreen(
             Text(
                 text = "Sign In",
                 style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 40.sp, fontWeight = FontWeight.ExtraBold
+                    fontSize = 32.sp, fontWeight = FontWeight.ExtraBold
                 ),
             )
             Spacer(modifier = Modifier.height(14.dp))
@@ -164,18 +176,13 @@ fun LoginScreen(
                     textDecoration = TextDecoration.Underline,
                     color = MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier.clickable {
-                        navController.navigate("register")
+                        navController.navigate(Routes.REGISTER)
                     })
             }
         }
 
         if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(48.dp)
-                    .align(Alignment.Center),
-                color = MaterialTheme.colorScheme.tertiary
-            )
+            LoadingContent(text = "Memproses login...")
         }
 
     }

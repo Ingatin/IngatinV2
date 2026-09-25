@@ -1,6 +1,7 @@
 package id.co.ingatin.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,13 +28,19 @@ fun ButtonCategory(
 ) {
 
     val buttonColor = if (isSelected) {
-        MaterialTheme.colorScheme.secondary
+        MaterialTheme.colorScheme.surface
     } else {
         MaterialTheme.colorScheme.primary
     }
 
+    val border = if (isSelected) {
+        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+    } else {
+        null
+    }
+
     val textColor = if (isSelected) {
-        Color.Gray // Warna teks saat dipilih
+        MaterialTheme.colorScheme.primary // Warna teks saat dipilih
     } else {
         Color.White // Warna teks default
     }
@@ -47,7 +54,8 @@ fun ButtonCategory(
             ),
         shape = RoundedCornerShape(12.dp),
         color = buttonColor,
-        contentColor = textColor
+        contentColor = textColor,
+        border = border
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 fun HomeTabs(
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
-    categories: List<String> = listOf("All Task", "Academy", "Work")
+    categories: List<String>
 ) {
     Row(
         modifier = Modifier

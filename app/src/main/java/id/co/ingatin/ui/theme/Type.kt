@@ -16,33 +16,33 @@ val Poppins = FontFamily(
     Font(R.font.poppins_medium, FontWeight.Medium),
     Font(R.font.poppins_regular, FontWeight.Normal),
     Font(R.font.poppins_semibold, FontWeight.SemiBold),
-    Font(R.font.poppins_black, FontWeight.Normal)
+    Font(R.font.poppins_black, FontWeight.Black)
 )
 
 val typography = Typography(
     titleLarge = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 30.sp
+        fontSize = 24.sp
     ),
     titleMedium = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Bold,
-        fontSize = 24.sp
+        fontSize = 20.sp
     ),
     titleSmall = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Bold,
-        fontSize = 16.sp
+        fontSize = 14.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp
+        fontSize = 14.sp
     ),
     bodySmall = TextStyle(
         fontFamily = Poppins,
         fontWeight = FontWeight.Normal,
-        fontSize = 10.sp
+        fontSize = 12.sp
     )
 )

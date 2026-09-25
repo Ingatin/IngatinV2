@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -18,7 +21,6 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,8 +44,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import id.co.ingatin.Routes
 import id.co.ingatin.ui.common.UiState
 import id.co.ingatin.ui.components.CustomTextField
+import id.co.ingatin.ui.components.LoadingContent
 import id.co.ingatin.ui.theme.IngatinTheme
 
 @Composable
@@ -68,8 +72,8 @@ fun RegisterScreen(
         when (val state = registerState) {
             is UiState.Success -> {
                 Toast.makeText(context, state.data, Toast.LENGTH_SHORT).show()
-                navController.navigate("home") {
-                    popUpTo("register") { inclusive = true }
+                navController.navigate(Routes.HOME) {
+                    popUpTo(Routes.REGISTER) { inclusive = true }
                 }
             }
             is UiState.Error -> {
@@ -80,16 +84,22 @@ fun RegisterScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .imePadding()
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             IconButton(
                 onClick = {
-                    navController.navigate("login")
+                    navController.popBackStack()
                 },
                 modifier = Modifier
                     .clip(RoundedCornerShape(18.dp))
@@ -184,12 +194,7 @@ fun RegisterScreen(
         }
 
         if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(48.dp)
-                    .align(Alignment.Center),
-                color = MaterialTheme.colorScheme.tertiary
-            )
+            LoadingContent(text = "Memproses pendaftaran...")
         }
 
     }

@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import id.co.ingatin.Routes
 
 @Composable
 fun headerTask(
@@ -29,7 +30,7 @@ fun headerTask(
     ) {
         IconButton(
             onClick = {
-                navController.navigate("home") {
+                navController.navigate(Routes.HOME) {
                     popUpTo(0)
                 }
             },

@@ -1,8 +1,6 @@
 package id.co.ingatin.data.repository
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -20,7 +18,6 @@ class TaskRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun createTasks(form: FormTask): Result<String> {
         return try {
             val dueDate = toTimestamp(form.date, form.time)
@@ -131,7 +128,6 @@ class TaskRepository @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun editTaskById(taskId: String, form: FormTask): Result<Boolean> {
         return try {
             val dueDate = toTimestamp(form.date, form.time)
