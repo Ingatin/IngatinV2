@@ -14,7 +14,6 @@ class ReminderReceiver : BroadcastReceiver() {
         if (intent.action != ACTION_TASK_REMINDER) return
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Pengingat Tugas"
-        val desc = intent.getStringExtra(EXTRA_DESC) ?: ""
         val message = intent.getStringExtra(EXTRA_MESSAGE)
             ?: "Segera selesaikan tugasmu!"
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 1001)
@@ -23,7 +22,6 @@ class ReminderReceiver : BroadcastReceiver() {
         Notifier.show(
             context = context.applicationContext,
             title = title,
-            desc = desc,
             message = message,
             notificationId = notificationId,
             isDueNow = isDueNow

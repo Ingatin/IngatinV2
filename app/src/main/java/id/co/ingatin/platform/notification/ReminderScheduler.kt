@@ -11,7 +11,6 @@ const val ACTION_TASK_REMINDER = "id.co.ingatin.ACTION_TASK_REMINDER"
 
 /** Extra payload alarm pengingat. */
 const val EXTRA_TITLE = "extra_title"
-const val EXTRA_DESC = "extra_desc"
 const val EXTRA_MESSAGE = "extra_message"
 const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
 const val EXTRA_IS_DUE_NOW = "extra_is_due_now"
@@ -26,7 +25,7 @@ interface ReminderScheduler {
      * Jadwalkan pengingat untuk sebuah task — satu alarm per offset
      * (10 menit sebelum deadline & tepat pada [dueMillis]).
      */
-    fun schedule(taskId: String, title: String, description: String, dueMillis: Long)
+    fun schedule(taskId: String, title: String, dueMillis: Long)
 
     /** Batalkan semua alarm milik sebuah task (dipanggil saat task dihapus/diubah). */
     fun cancel(taskId: String)
@@ -50,7 +49,6 @@ class AlarmReminderSchedulerImpl(
     override fun schedule(
         taskId: String,
         title: String,
-        description: String,
         dueMillis: Long
     ) {
         val now = System.currentTimeMillis()
@@ -68,7 +66,7 @@ class AlarmReminderSchedulerImpl(
             else
                 "The task \"$title\" is due in $offset minutes!"
             val pendingIntent =
-                reminderPendingIntent(taskId, title, description, message, offset)
+                reminderPendingIntent(taskId, title, message, offset)
             try {
                 if (exactAllowed) {
                     alarmManager.setExactAndAllowWhileIdle(
@@ -89,7 +87,7 @@ class AlarmReminderSchedulerImpl(
             }
         }
 
-        if (scheduledAny) ledger.save(taskId, title, description, dueMillis)
+        if (scheduledAny) ledger.save(taskId, title, dueMillis)
         else ledger.clear(taskId)
     }
 
@@ -97,7 +95,7 @@ class AlarmReminderSchedulerImpl(
         cancelLegacyAlarms(taskId)
         val alarmManager = context.getSystemService(AlarmManager::class.java)
         for (offset in REMINDER_OFFSETS_MINUTES) {
-            val pendingIntent = reminderPendingIntent(taskId, "", "", "", offset)
+            val pendingIntent = reminderPendingIntent(taskId, "", "", offset)
             alarmManager?.cancel(pendingIntent)
             pendingIntent.cancel()
         }
@@ -115,7 +113,7 @@ class AlarmReminderSchedulerImpl(
         val alarmManager = context.getSystemService(AlarmManager::class.java) ?: return
         for (offset in LEGACY_REMINDER_OFFSETS_MINUTES) {
             if (offset in REMINDER_OFFSETS_MINUTES) continue
-            val pendingIntent = reminderPendingIntent(taskId, "", "", "", offset)
+            val pendingIntent = reminderPendingIntent(taskId, "", "", offset)
             alarmManager.cancel(pendingIntent)
             pendingIntent.cancel()
         }
@@ -132,14 +130,12 @@ class AlarmReminderSchedulerImpl(
     private fun reminderPendingIntent(
         taskId: String,
         title: String,
-        description: String,
         message: String,
         offsetMinutes: Long
     ): PendingIntent {
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             action = ACTION_TASK_REMINDER
             putExtra(EXTRA_TITLE, title)
-            putExtra(EXTRA_DESC, description)
             putExtra(EXTRA_MESSAGE, message)
             putExtra(EXTRA_NOTIFICATION_ID, requestCodeFor(taskId, offsetMinutes))
             putExtra(EXTRA_IS_DUE_NOW, offsetMinutes == 0L)

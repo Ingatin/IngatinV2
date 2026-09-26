@@ -217,7 +217,6 @@ class TaskViewModel @Inject constructor(
             reminderScheduler.schedule(
                 taskId = taskId,
                 title = form.title,
-                description = form.description,
                 dueMillis = dueMillis
             )
         } catch (e: Exception) {

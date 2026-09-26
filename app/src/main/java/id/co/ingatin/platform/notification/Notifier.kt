@@ -20,7 +20,6 @@ object Notifier {
     fun show(
         context: Context,
         title: String,
-        desc: String,
         message: String,
         notificationId: Int = 1001,
         isDueNow: Boolean = false
@@ -46,7 +45,6 @@ object Notifier {
             .setSmallIcon(R.drawable.iconingatin)
             .setContentTitle(title)
             .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(desc))
             .setPriority(
                 if (isDueNow) NotificationCompat.PRIORITY_MAX
                 else NotificationCompat.PRIORITY_HIGH
