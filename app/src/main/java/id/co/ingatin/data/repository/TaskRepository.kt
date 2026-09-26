@@ -28,12 +28,12 @@ class TaskRepository @Inject constructor(
                 description = form.description
             )
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
-            firestore.collection("users").document(uid)
+            val docRef = firestore.collection("users").document(uid)
                 .collection("tasks")
                 .add(task)
                 .await()
             Log.d(TASK, "createTasks success: $task")
-            Result.success("Berhasil membuat tugas baru")
+            Result.success(docRef.id)
         } catch (e: Exception) {
             Log.e(TASK, "createTasks failure", e)
             Result.failure(e)

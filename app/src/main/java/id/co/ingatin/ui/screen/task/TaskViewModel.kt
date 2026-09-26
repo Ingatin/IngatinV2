@@ -1,5 +1,6 @@
 package id.co.ingatin.ui.screen.task
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,6 +11,8 @@ import id.co.ingatin.data.model.toCategory
 import id.co.ingatin.data.model.toDomain
 import id.co.ingatin.data.repository.TaskRepository
 import id.co.ingatin.data.utils.ConnectivityObserver
+import id.co.ingatin.data.utils.toTimestamp
+import id.co.ingatin.platform.notification.ReminderScheduler
 import id.co.ingatin.ui.common.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +23,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
-    private val connectivityObserver: ConnectivityObserver
+    private val connectivityObserver: ConnectivityObserver,
+    private val reminderScheduler: ReminderScheduler
 ) : ViewModel() {
 
 
@@ -72,13 +76,6 @@ class TaskViewModel @Inject constructor(
             }
         }
     }
-
-    fun getCategoryNames(): List<String> =
-        when (val state = _categoryOption.value) {
-            is UiState.Success -> state.data.map { it.name }
-            else -> emptyList()
-        }
-
 
     fun setCategory(category: String) {
         _selectedCategory.value = category
@@ -157,7 +154,8 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             val response = taskRepository.createTasks(form)
 
-            response.onSuccess {
+            response.onSuccess { taskId ->
+                scheduleReminders(taskId, form)
                 _createTaskState.value =
                     UiState.Success("Berhasil membuat task ${form.category} baru")
             }.onFailure {
@@ -191,6 +189,8 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             val response = taskRepository.editTaskById(taskId, form)
             response.onSuccess {
+                reminderScheduler.cancel(taskId)
+                scheduleReminders(taskId, form)
                 _updateTaskState.value = UiState.Success(it)
             }.onFailure {
                 _updateTaskState.value = UiState.Error(it.message ?: "Unknown Error")
@@ -203,12 +203,32 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             val response = taskRepository.deleteTaskById(taskId)
             response.onSuccess {
+                reminderScheduler.cancel(taskId)
                 _deleteTask.value = UiState.Success(it)
             }.onFailure {
                 _deleteTask.value = UiState.Error(it.message ?: "Unknown Error")
             }
         }
     }
+
+    private fun scheduleReminders(taskId: String, form: FormTask) {
+        try {
+            val dueMillis = toTimestamp(form.date, form.time).toDate().time
+            reminderScheduler.schedule(
+                taskId = taskId,
+                title = form.title,
+                description = form.description,
+                dueMillis = dueMillis
+            )
+        } catch (e: Exception) {
+            Log.e("TaskViewModel", "scheduleReminders failure", e)
+        }
+    }
+
+    /** Dibaca ulang tiap dipanggil agar status izin selalu fresh. */
+    fun canScheduleExact(): Boolean = reminderScheduler.canScheduleExact()
+
+    fun openExactAlarmSettings() = reminderScheduler.openExactAlarmSettings()
 
     fun getCategoryOptions() {
         _categoryOption.value = UiState.Loading

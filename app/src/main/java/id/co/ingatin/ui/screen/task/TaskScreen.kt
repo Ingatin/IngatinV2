@@ -88,6 +88,7 @@ fun TaskScreen(
     val selectCategory by viewModel.selectCategory.collectAsState()
 
     val showDialog = remember { mutableStateOf(false) }
+    val showExactAlarmDialog = remember { mutableStateOf(false) }
     val showTimePicker = remember { mutableStateOf(false) }
     val showDatePicker = remember { mutableStateOf(false) }
 
@@ -182,6 +183,31 @@ fun TaskScreen(
     }
 
 
+    fun submitTask() {
+        if (taskId.isNotEmpty()) {
+            viewModel.editTaskById(
+                taskId,
+                FormTask(
+                    title = title,
+                    description = description,
+                    category = selectCategory,
+                    date = date,
+                    time = time
+                )
+            )
+        } else {
+            viewModel.createTask(
+                FormTask(
+                    title = title,
+                    description = description,
+                    category = selectCategory,
+                    date = date,
+                    time = time
+                )
+            )
+        }
+    }
+
     if (showDialog.value) {
         val isSubmitting = createTaskState is UiState.Loading || updateTaskState is UiState.Loading
         ConfirmDialog(
@@ -195,28 +221,29 @@ fun TaskScreen(
             isConfirming = isSubmitting,
             onDismiss = { showDialog.value = false },
             onConfirm = {
-                if (taskId.isNotEmpty()) {
-                    viewModel.editTaskById(
-                        taskId,
-                        FormTask(
-                            title = title,
-                            description = description,
-                            category = selectCategory,
-                            date = date,
-                            time = time
-                        )
-                    )
+                if (!viewModel.canScheduleExact()) {
+                    showExactAlarmDialog.value = true
                 } else {
-                    viewModel.createTask(
-                        FormTask(
-                            title = title,
-                            description = description,
-                            category = selectCategory,
-                            date = date,
-                            time = time
-                        )
-                    )
+                    submitTask()
                 }
+            }
+        )
+    }
+
+    if (showExactAlarmDialog.value) {
+        ConfirmDialog(
+            title = "Izin Pengingat Tepat Waktu",
+            message = "Agar pengingat berbunyi tepat waktu, aktifkan izin \"Alarms & reminders\" untuk Ingatin di Pengaturan.",
+            confirmText = "Buka Pengaturan",
+            dismissText = "Lewati",
+            onDismiss = {
+                showExactAlarmDialog.value = false
+                submitTask()
+            },
+            onConfirm = {
+                showExactAlarmDialog.value = false
+                viewModel.openExactAlarmSettings()
+                submitTask()
             }
         )
     }
