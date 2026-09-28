@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -55,23 +54,28 @@ fun CardMyTask(
             ) {
                 Text(
                     text = tasks.title,
-                    style = MaterialTheme.typography.titleMedium.copy(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
+                    style = MaterialTheme.typography.titleSmall.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
-                    )
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = tasks.category,
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(color = MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .width(100.dp),
-                    style = MaterialTheme.typography.bodyMedium.copy(
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.tertiary
                     ),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
                 )
             }
 
@@ -90,16 +94,16 @@ fun CardMyTask(
             Text(
                 text = tasks.date + " " + tasks.time,
                 modifier = Modifier
-                    .width(150.dp)
                     .align(Alignment.End)
                     .clip(RoundedCornerShape(12.dp))
                     .background(color = MaterialTheme.colorScheme.primary)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Normal,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.tertiary
                 ),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                maxLines = 1
             )
 
 

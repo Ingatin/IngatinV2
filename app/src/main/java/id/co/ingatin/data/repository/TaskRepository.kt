@@ -1,15 +1,14 @@
 package id.co.ingatin.data.repository
 
 import android.util.Log
-import com.google.android.gms.tasks.Task
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import id.co.ingatin.data.model.CategoryDto
 import id.co.ingatin.data.model.FormTask
 import id.co.ingatin.data.model.TaskDto
 import id.co.ingatin.data.utils.toTimestamp
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -28,12 +27,12 @@ class TaskRepository @Inject constructor(
                 description = form.description
             )
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
-            firestore.collection("users").document(uid)
+            val docRef = firestore.collection("users").document(uid)
                 .collection("tasks")
                 .add(task)
                 .await()
             Log.d(TASK, "createTasks success: $task")
-            Result.success("Berhasil membuat tugas baru")
+            Result.success(docRef.id)
         } catch (e: Exception) {
             Log.e(TASK, "createTasks failure", e)
             Result.failure(e)
@@ -43,8 +42,11 @@ class TaskRepository @Inject constructor(
     suspend fun getAllTasks(): Result<List<TaskDto>> {
         return try {
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
+            val now = Timestamp.now()
             val task = firestore.collection("users").document(uid)
                 .collection("tasks")
+                .whereGreaterThanOrEqualTo("dueDate", now)
+                .orderBy("dueDate", Query.Direction.ASCENDING)
                 .get()
                 .await()
                 .toObjects(TaskDto::class.java)
@@ -55,27 +57,16 @@ class TaskRepository @Inject constructor(
             Result.failure(e)
         }
     }
-
-    private suspend fun generateIdCategory(uid: String): String {
-        val count = firestore.collection("users").document(uid)
-            .collection("categories")
-            .get()
-            .await()
-            .size()
-        return "c-%03d".format(count + 1)
-    }
-
     suspend fun createCategory(name: String): Result<String> {
         return try {
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
-            val id = generateIdCategory(uid)
             val data = hashMapOf("name" to name)
-            firestore.collection("users").document(uid)
-                .collection("categories").document(id)
+            val docRef = firestore.collection("users").document(uid)
+                .collection("categories").document()
                 .set(data)
                 .await()
-            Log.d(TASK, "createCategory success: $id")
-            Result.success(id)
+            Log.d(TASK, "createCategory success: $docRef.id")
+            Result.success("$docRef.id")
         } catch (e: Exception) {
             Log.e(TASK, "createCategory failure", e)
             Result.failure(e)

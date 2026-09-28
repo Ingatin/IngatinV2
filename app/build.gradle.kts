@@ -83,8 +83,4 @@ dependencies {
 //    Navigation
     implementation(libs.androidx.navigation.compose)
 
-//    Worker
-    implementation ("androidx.work:work-runtime-ktx:2.9.0")
-
-
 }
