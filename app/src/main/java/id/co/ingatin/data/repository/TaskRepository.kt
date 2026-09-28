@@ -1,15 +1,14 @@
 package id.co.ingatin.data.repository
 
 import android.util.Log
-import com.google.android.gms.tasks.Task
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import id.co.ingatin.data.model.CategoryDto
 import id.co.ingatin.data.model.FormTask
 import id.co.ingatin.data.model.TaskDto
 import id.co.ingatin.data.utils.toTimestamp
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -43,8 +42,11 @@ class TaskRepository @Inject constructor(
     suspend fun getAllTasks(): Result<List<TaskDto>> {
         return try {
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
+            val now = Timestamp.now()
             val task = firestore.collection("users").document(uid)
                 .collection("tasks")
+                .whereGreaterThanOrEqualTo("dueDate", now)
+                .orderBy("dueDate", Query.Direction.ASCENDING)
                 .get()
                 .await()
                 .toObjects(TaskDto::class.java)
