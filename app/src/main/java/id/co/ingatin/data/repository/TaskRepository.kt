@@ -55,27 +55,16 @@ class TaskRepository @Inject constructor(
             Result.failure(e)
         }
     }
-
-    private suspend fun generateIdCategory(uid: String): String {
-        val count = firestore.collection("users").document(uid)
-            .collection("categories")
-            .get()
-            .await()
-            .size()
-        return "c-%03d".format(count + 1)
-    }
-
     suspend fun createCategory(name: String): Result<String> {
         return try {
             val uid = auth.currentUser?.uid ?: throw Exception("User ID not found")
-            val id = generateIdCategory(uid)
             val data = hashMapOf("name" to name)
-            firestore.collection("users").document(uid)
-                .collection("categories").document(id)
+            val docRef = firestore.collection("users").document(uid)
+                .collection("categories").document()
                 .set(data)
                 .await()
-            Log.d(TASK, "createCategory success: $id")
-            Result.success(id)
+            Log.d(TASK, "createCategory success: $docRef.id")
+            Result.success("$docRef.id")
         } catch (e: Exception) {
             Log.e(TASK, "createCategory failure", e)
             Result.failure(e)
